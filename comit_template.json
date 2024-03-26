@@ -1,0 +1,273 @@
+{
+  "$schema": "https://bendera.github.io/vscode-commit-message-editor/schemas/config-v1.schema.json",
+  "configVersion": "1",
+  "staticTemplate": [
+    ":emoji: :prefix: / Subject",
+    "",
+    "#Work item number Commit body..."
+  ],
+  "dynamicTemplate": [
+    "{emoji} {prefix} / {description}",
+    "",
+    "{body}"
+  ],
+  "tokens": [
+    {
+      "label": "Emoji",
+      "name": "emoji",
+      "type": "enum",
+      "options": [
+        {
+          "label": "🐛",
+          "description": "バグ修正（fix/hotfix）",
+          "value": ":bug:"
+        },
+        {
+          "label": "👍",
+          "description": "機能改善（update/change/add/feat）",
+          "value": ":+1:"
+        },
+        {
+          "label": "✨",
+          "description": "部分的な機能追加（add/feat）",
+          "value": ":sparkles:"
+        },
+        {
+          "label": "🎉",
+          "description": "盛大に祝うべき大きな機能追加（add/feat）",
+          "value": ":tada:"
+        },
+        {
+          "label": "🎨",
+          "description": "デザイン変更のみ（clean/style）",
+          "value": ":art:"
+        },
+        {
+          "label": "👕",
+          "description": "Lintエラーやコードスタイルの修正（clean/style）",
+          "value": ":shirt:"
+        },
+        {
+          "label": "💢",
+          "description": "コンフリクト（clean/disable/revert）",
+          "value": ":anger:"
+        },
+        {
+          "label": "♻️",
+          "description": "リファクタリング（refactor）",
+          "value": ":recycle:"
+        },
+        {
+          "label": "🚿",
+          "description": "使われなくなった機能の削除（disable/remove/delete）",
+          "value": ":shower:"
+        },
+        {
+          "label": "🔥",
+          "description": "不要な機能の削除（disable/remove/delete）",
+          "value": ":fire:"
+        },
+        {
+          "label": "✏",
+          "description": "ファイル名変更（rename）",
+          "value": ":pencil2:"
+        },
+        {
+          "label": "📁",
+          "description": "ファイル移動（move）",
+          "value": ":file_folder:"
+        },
+        {
+          "label": "↩️",
+          "description": "修正取り消し（revert）",
+          "value": ":leftwards_arrow_with_hook:"
+        },
+        {
+          "label": "🚧",
+          "description": "WIP（temp）",
+          "value": ":construction:"
+        },
+        {
+          "label": "🔒",
+          "description": "新機能の公開範囲制限（temp/update）",
+          "value": ":lock:"
+        },
+        {
+          "label": "🆙",
+          "description": "バージョンアップ・アップグレード（upgrade）",
+          "value": ":up:"
+        },
+        {
+          "label": "📚",
+          "description": "ドキュメント追加・修正 (docs)",
+          "value": ":books:"
+        },
+        {
+          "label": "📝",
+          "description": "コメント文修正（docs）",
+          "value": ":memo:"
+        },
+        {
+          "label": "🔗",
+          "description": "URL修正 (fix/docs)",
+          "value": ":link:"
+        },
+        {
+          "label": "💚",
+          "description": "テストやCIの修正・改善（test）",
+          "value": ":green_heart:"
+        },
+        {
+          "label": "🚀",
+          "description": "パフォーマンス改善（perf/update）",
+          "value": ":rocket:"
+        },
+        {
+          "label": "👮",
+          "description": "セキュリティ関連改善（perf/update）",
+          "value": ":cop:"
+        },
+        {
+          "label": "⚙",
+          "description": "config変更（chore）",
+          "value": ":gear:"
+        }
+      ],
+      "description": "Prefix emoji"
+    },
+    {
+      "label": "Prefix",
+      "name": "prefix",
+      "type": "enum",
+      "options": [
+        {
+          "label": "fix",
+          "description": "バグ修正",
+          "value": "fix"
+        },
+        {
+          "label": "hotfix",
+          "description": "クリティカルなバグ修正",
+          "value": "hotfix"
+        },
+        {
+          "label": "update",
+          "description": "バグではない機能修正",
+          "value": "update"
+        },
+        {
+          "label": "change",
+          "description": "仕様変更による機能修正",
+          "value": "change"
+        },
+        {
+          "label": "add",
+          "description": "新規ファイル追加",
+          "value": "add"
+        },
+        {
+          "label": "feat",
+          "description": "新規機能追加",
+          "value": "feat"
+        },
+        {
+          "label": "clean",
+          "description": "ソースコード整理",
+          "value": "clean"
+        },
+        {
+          "label": "refactor",
+          "description": "リファクタリング",
+          "value": "refactor"
+        },
+        {
+          "label": "style",
+          "description": "フォーマット修正",
+          "value": "style"
+        },
+        {
+          "label": "disable",
+          "description": "無効化",
+          "value": "disable"
+        },
+        {
+          "label": "remove",
+          "description": "コードの一部除去",
+          "value": "remove"
+        },
+        {
+          "label": "update",
+          "description": "バグではない機能修正",
+          "value": "update"
+        },
+        {
+          "label": "rename",
+          "description": "ファイル名変更",
+          "value": "rename"
+        },
+        {
+          "label": "move",
+          "description": "ファイル移動",
+          "value": "move"
+        },
+        {
+          "label": "delete",
+          "description": "ファイル削除",
+          "value": "delete"
+        },
+        {
+          "label": "revert",
+          "description": "修正取り消し",
+          "value": "revert"
+        },
+        {
+          "label": "temp",
+          "description": "一時的・仕掛中のコミット",
+          "value": "temp"
+        },
+        {
+          "label": "upgrade",
+          "description": "バージョンアップ",
+          "value": "upgrade"
+        },
+        {
+          "label": "docs",
+          "description": "ドキュメント修正",
+          "value": "docs"
+        },
+        {
+          "label": "test",
+          "description": "テスト追加や間違っていたのテスト修正",
+          "value": "test"
+        },
+        {
+          "label": "perf",
+          "description": "性能向上する修正",
+          "value": "perf"
+        },
+        {
+          "label": "chore",
+          "description": "ビルドツールやライブラリの追加・修正",
+          "value": "chore"
+        }
+      ],
+      "description": "Type of changes"
+    },
+    {
+      "label": "Description",
+      "name": "description",
+      "description": "Short description in the subject line.",
+      "type": "text",
+      "multiline": false
+    },
+    {
+      "label": "Body",
+      "name": "body",
+      "description": "Optional body",
+      "type": "text",
+      "multiline": true,
+      "lines": 3,
+      "maxLines": 10
+    }
+  ]
+}
