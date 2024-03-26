@@ -10,6 +10,9 @@ const PATH = require('path');
 const logger = require('../utils/logger');
 const messenger = require('../utils/messenger');
 
+// ログファイルのバックアップと新規作成
+logger.logRotate();
+
 // Discord クライアントを作成
 const DISCORD = new Discord.Client({ intents: [Discord.GatewayIntentBits.Guilds] });
 
@@ -38,9 +41,6 @@ DISCORD.once('ready', async () => {
         data.push(commands[commandName].data);
     }
     await DISCORD.application.commands.set(data);
-
-    // ログファイルのバックアップと新規作成
-    logger.logRotate();
 
     logger.logToFile(`${DISCORD.user.tag} でログインしました`);
 });
