@@ -9,13 +9,6 @@ GPT Bot for Discord using OpenAI API
 
 ## Required (Only once)
 
-- <s>`npm` initialize</s> (Already applied)
-
-  ```shell-session
-  $ npm init
-  $ npm install discord.js dotenv openai
-  ```
-
 - `.env` (Root directory)
   - OPENAI_ORG_ID : OpenAI [Organization ID](https://platform.openai.com/account/organization)
   - OPENAI_API_KEY : OpenAI [API keys](https://platform.openai.com/account/api-keys)

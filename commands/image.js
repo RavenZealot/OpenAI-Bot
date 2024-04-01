@@ -72,19 +72,19 @@ module.exports = {
                         await interaction.editReply(`${messenger.requestMessages(request, size)}\r\n\n${messenger.answerMessages(answer.url, openAiEmoji)}\r\n`);
                         logger.logToFile(`生成イラスト : ${answer.url}`); // 生成イラストのURLをコンソールに出力
                     } catch (error) {
-                        await interaction.editReply(`${messenger.errorMessages(`OpenAI API のイラスト生成でエラーが発生しました`)}`);
+                        await interaction.editReply(`${messenger.errorMessages(`OpenAI API のイラスト生成でエラーが発生しました`, error.message)}`);
                         logger.errorToFile(`OpenAI API のイラスト生成でエラーが発生`, error);
                     }
                 })();
             } catch (error) {
-                await interaction.editReply(`${messenger.errorMessages(`依頼の取得でエラーが発生しました`)}`);
+                await interaction.editReply(`${messenger.errorMessages(`依頼の取得でエラーが発生しました`, error.message)}`);
                 logger.errorToFile(`依頼の取得でエラーが発生`, error);
             }
         }
         // インタラクションが特定のチャンネルでなければ何もしない
         else {
             await interaction.reply({
-                content: `${messenger.errorMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`)}`,
+                content: `${messenger.usageMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`)}`,
                 ephemeral: true
             });
             return;

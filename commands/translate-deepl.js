@@ -117,19 +117,19 @@ module.exports = {
                         await interaction.editReply(`${messenger.requestMessages(request)}\r\n\n${messenger.deepLMessages(answer, deepLEmoji, target)}\r\n`);
                         logger.logToFile(`翻訳文 : ${answer.text.trim()}`); // 翻訳文をコンソールに出力
                     } catch (error) {
-                        await interaction.editReply(`${messenger.errorMessages(`DeepL API の返信でエラーが発生しました`)}`);
+                        await interaction.editReply(`${messenger.errorMessages(`DeepL API の返信でエラーが発生しました`, error.message)}`);
                         logger.errorToFile(`DeepL API の返信でエラーが発生`, error);
                     }
                 })();
             } catch (error) {
-                await interaction.editReply(`${messenger.errorMessages(`原文の取得でエラーが発生しました`)}`);
+                await interaction.editReply(`${messenger.errorMessages(`原文の取得でエラーが発生しました`, error.message)}`);
                 logger.errorToFile(`原文の取得でエラーが発生`, error);
             }
         }
         // インタラクションが特定のチャンネルでなければ何もしない
         else {
             await interaction.reply({
-                content: `${messenger.errorMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`)}`,
+                content: `${messenger.usageMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`)}`,
                 ephemeral: true
             });
             return;

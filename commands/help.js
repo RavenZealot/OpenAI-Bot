@@ -54,19 +54,19 @@ module.exports = {
                         const answer = helpGenerator(target);
                         await interaction.editReply(`${messenger.answerMessages(answer, openAiEmoji)}\r\n`);
                     } catch (error) {
-                        await interaction.editReply(`${messenger.errorMessages(`対象コマンドの解説でエラーが発生しました`)}`);
+                        await interaction.editReply(`${messenger.errorMessages(`対象コマンドの解説でエラーが発生しました`, error.message)}`);
                         logger.errorToFile(`対象コマンドの解説でエラーが発生`, error);
                     }
                 })();
             } catch (error) {
-                await interaction.editReply(`${messenger.errorMessages(`対象コマンドの取得でエラーが発生しました`)}`);
+                await interaction.editReply(`${messenger.errorMessages(`対象コマンドの取得でエラーが発生しました`, error.message)}`);
                 logger.errorToFile(`対象コマンドの取得でエラーが発生`, error);
             }
         }
         // インタラクションが特定のチャンネルでなければ何もしない
         else {
             await interaction.reply({
-                content: `${messenger.errorMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`)}`,
+                content: `${messenger.usageMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`)}`,
                 ephemeral: true
             });
             return;
