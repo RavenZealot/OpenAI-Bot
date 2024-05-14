@@ -102,7 +102,7 @@ module.exports = {
                 (async () => {
                     try {
                         const completion = await OPENAI.chat.completions.create({
-                            model: 'gpt-4-turbo-preview',
+                            model: 'gpt-4o',
                             messages: [{ role: 'system', content: `${prompt}` }, { role: 'user', content: `${request}` }]
                         });
                         const answer = completion.choices[0];
