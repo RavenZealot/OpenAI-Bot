@@ -172,11 +172,12 @@ function promptGenerator(prompt) {
         case 'figure':
             return `ユーザからの「要求」に対して，適切な Mermaid ダイアグラムを作成してください．`;
         case 'commit':
-            return `ユーザからの「変更内容」に対して，Git のコミットメッセージを \`:emoji: prefix / Subject\` のテンプレートで 3 候補作成してください．1 行目には「変更内容」のみを英文で簡潔にまとめて，2 行目以降から箇条書きで表示してください．
+            return `ユーザからの「変更内容」に対して，Git のコミットメッセージのヘッダ（1行目）を \`:emoji: prefix / Subject\` のテンプレートで箇条書きで 3 候補作成してください．1 行目には「変更内容」のみを英文で簡潔にまとめて，2 行目以降から箇条書きで表示してください．
 emoji は次の中から選択してください．\`:bug:\` for Bug fixes, \`:+1:\` for Feature improvement, \`:sparkles:\` for Partial function addition, \`:tada:\` for A big feature addition to celebrate, \`:art:\` for Design change only, \`:shirt:\` for Lint error or code style fix, \`:anger:\` for Solved conflict, \`:recycle:\` for Refactoring, \`:shower:\` for Remove unused features, \`:fire:\` for Remove unnecessary features, \`:pencil2:\` for File name change, \`:file_folder:\` for File move, \`:leftwards_arrow_with_hook:\` for Undo fix, \`:construction:\` for WIP, \`:lock:\` for New feature release range restriction, \`:up:\` for Version up, \`:books:\` for Add or modify documents, \`:memo:\` for Modify comments, \`:green_heart:\` for Modify or improve tests and CI, \`:rocket:\` for Improve performance, \`:cop:\` for Improve security, \`:gear:\` for Change config
 prefix は次の中から選択してください．\`fix\` for Bug fixes, \`hotfix\` for Critical bug fixes, \`update\` for Functionality fixes that are not bugs, \`change\` for Functionality fixes due to specification changes, \`add\` for Add new file, \`feat\` for Add new functionality, \`clean\` for Source code cleanup, \`refactor\` for Refactoring, \`style\` for Format fixes, \`disable\` for Disable, \`remove\` for Remove part of code, \`update\` for Functionality fixes that are not bugs, \`rename\` for Rename file, \`move\` for Move file, \`delete\` for Delete file, \`revert\` for Undo fix, \`temp\` for Temporary or work-in-progress commit, \`upgrade\` for Version up, \`docs\` for Documentation fixes, \`test\` for Add test or fix incorrect test, \`perf\` for Fixes that improve performance, \`chore\` for Add or fix build tools or libraries
 Subject は英語で簡潔な 30 字程度の要約としてください．
-例 : 「チャットのテキストをコピーする機能を追加」→「:+1: update / Added feature to copy text of chats」，「自動コードハイライトの適用箇所をページ全体から必要な部分のみになるように改良」→「:rocket: perf / Optimized application of code highlighting」`;
+入力例 : チャットのテキストをコピーする機能を追加
+返答例 : **Added feature to copy chat text.**\n- \`:+1: update / Added feature to copy text of chats\`\n- \`:sparkles: feat / Add feature to copy chat text\`\n- \`:up: upgrade / Introduce text copy functionality in chat\``;
         default:
             return `ユーザからの「質問」に対して，適切な回答を行ってください．`;
     }
