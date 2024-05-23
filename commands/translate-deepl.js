@@ -114,7 +114,7 @@ module.exports = {
                         const DEEPL = require('deepl-node');
                         const translator = new DEEPL.Translator(process.env.DEEPL_API_KEY);
                         const answer = await translator.translateText(request, null, target);
-                        await interaction.editReply(`${messenger.requestMessages(request)}\r\n\n${messenger.deepLMessages(answer, deepLEmoji, target)}\r\n`);
+                        await interaction.editReply(`${messenger.deepLMessages(answer, deepLEmoji, target)}\r\n`);
                         logger.logToFile(`翻訳文 : ${answer.text.trim()}`); // 翻訳文をコンソールに出力
                     } catch (error) {
                         await interaction.editReply(`${messenger.errorMessages(`DeepL API の返信でエラーが発生しました`, error.message)}`);

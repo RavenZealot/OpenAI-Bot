@@ -69,7 +69,7 @@ module.exports = {
                             size: size
                         });
                         const answer = completion.data[0];
-                        await interaction.editReply(`${messenger.requestMessages(request, size)}\r\n\n${messenger.answerMessages(answer.url, openAiEmoji)}\r\n`);
+                        await interaction.editReply(`${messenger.answerMessages(answer.url, openAiEmoji)}\r\n`);
                         logger.logToFile(`生成イラスト : ${answer.url}`); // 生成イラストのURLをコンソールに出力
                     } catch (error) {
                         await interaction.editReply(`${messenger.errorMessages(`OpenAI API のイラスト生成でエラーが発生しました`, error.message)}`);

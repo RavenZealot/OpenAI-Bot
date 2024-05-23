@@ -90,7 +90,7 @@ module.exports = {
                             messages: [{ role: 'system', content: `${prompt}` }, { role: 'user', content: `${request}` }]
                         });
                         const answer = completion.choices[0];
-                        await interaction.editReply(`${messenger.requestMessages(request, promptParam)}\r\n\n${messenger.answerMessages(answer.message.content, openAiEmoji, target)}\r\n`);
+                        await interaction.editReply(`${messenger.answerMessages(answer.message.content, openAiEmoji, target)}\r\n`);
                         logger.logToFile(`翻訳文 : ${answer.message.content.trim()}`); // 翻訳文をコンソールに出力
                     } catch (error) {
                         await interaction.editReply(`${messenger.errorMessages(`OpenAI API の返信でエラーが発生しました`, error.message)}`);
