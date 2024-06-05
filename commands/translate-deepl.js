@@ -114,16 +114,24 @@ module.exports = {
                         const DEEPL = require('deepl-node');
                         const translator = new DEEPL.Translator(process.env.DEEPL_API_KEY);
                         const answer = await translator.translateText(request, null, target);
-                        await interaction.editReply(`${messenger.deepLMessages(answer, deepLEmoji, target)}\r\n`);
                         logger.logToFile(`翻訳文 : ${answer.text.trim()}`); // 翻訳文をコンソールに出力
+                        await interaction.editReply(`${messenger.deepLMessages(answer, deepLEmoji, target)}\r\n`);
                     } catch (error) {
-                        await interaction.editReply(`${messenger.errorMessages(`DeepL API の返信でエラーが発生しました`, error.message)}`);
-                        logger.errorToFile(`DeepL API の返信でエラーが発生`, error);
+                        // Discord の文字数制限の場合
+                        if (error.message.includes('Invalid Form Body')) {
+                            logger.errorToFile(`Discord 文字数制限が発生`, error);
+                            await interaction.editReply(`${messenger.errorMessages(`Discord 文字数制限が発生しました`, error.message)}`);
+                        }
+                        // その他のエラーの場合
+                        else {
+                            logger.errorToFile(`DeepL API の返信でエラーが発生`, error);
+                            await interaction.editReply(`${messenger.errorMessages(`DeepL API の返信でエラーが発生しました`, error.message)}`);
+                        }
                     }
                 })();
             } catch (error) {
-                await interaction.editReply(`${messenger.errorMessages(`原文の取得でエラーが発生しました`, error.message)}`);
                 logger.errorToFile(`原文の取得でエラーが発生`, error);
+                await interaction.editReply(`${messenger.errorMessages(`原文の取得でエラーが発生しました`, error.message)}`);
             }
         }
         // インタラクションが特定のチャンネルでなければ何もしない

@@ -43,7 +43,6 @@ module.exports = {
             try {
                 // 対象コマンドを取得
                 const target = interaction.options.getString('対象コマンド');
-                logger.logToFile(`対象コマンド : ${target}`); // 対象コマンドをコンソールに出力
 
                 // interaction の返信を遅延させる
                 await interaction.deferReply({ ephemeral: true });
@@ -54,13 +53,13 @@ module.exports = {
                         const answer = helpGenerator(target);
                         await interaction.editReply(`${messenger.answerMessages(answer, openAiEmoji)}\r\n`);
                     } catch (error) {
-                        await interaction.editReply(`${messenger.errorMessages(`対象コマンドの解説でエラーが発生しました`, error.message)}`);
                         logger.errorToFile(`対象コマンドの解説でエラーが発生`, error);
+                        await interaction.editReply(`${messenger.errorMessages(`対象コマンドの解説でエラーが発生しました`, error.message)}`);
                     }
                 })();
             } catch (error) {
-                await interaction.editReply(`${messenger.errorMessages(`対象コマンドの取得でエラーが発生しました`, error.message)}`);
                 logger.errorToFile(`対象コマンドの取得でエラーが発生`, error);
+                await interaction.editReply(`${messenger.errorMessages(`対象コマンドの取得でエラーが発生しました`, error.message)}`);
             }
         }
         // インタラクションが特定のチャンネルでなければ何もしない

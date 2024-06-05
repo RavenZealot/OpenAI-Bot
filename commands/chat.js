@@ -106,16 +106,25 @@ module.exports = {
                             messages: [{ role: 'system', content: `${prompt}` }, { role: 'user', content: `${request}` }]
                         });
                         const answer = completion.choices[0];
-                        await interaction.editReply(`${messenger.answerMessages(answer.message.content, openAiEmoji)}\r\n`);
+
                         logger.logToFile(`回答 : ${answer.message.content.trim()}`); // 回答をコンソールに出力
+                        await interaction.editReply(`${messenger.answerMessages(answer.message.content, openAiEmoji)}\r\n`);
                     } catch (error) {
-                        await interaction.editReply(`${messenger.errorMessages(`OpenAI API の返信でエラーが発生しました`, error.message)}`);
-                        logger.errorToFile(`OpenAI API の返信でエラーが発生`, error);
+                        // Discord の文字数制限の場合
+                        if (error.message.includes('Invalid Form Body')) {
+                            logger.errorToFile(`Discord 文字数制限が発生`, error);
+                            await interaction.editReply(`${messenger.errorMessages(`Discord 文字数制限が発生しました`, error.message)}`);
+                        }
+                        // その他のエラーの場合
+                        else {
+                            logger.errorToFile(`OpenAI API の返信でエラーが発生`, error);
+                            await interaction.editReply(`${messenger.errorMessages(`OpenAI API の返信でエラーが発生しました`, error.message)}`);
+                        }
                     }
                 })();
             } catch (error) {
-                await interaction.editReply(`${messenger.errorMessages(`質問の取得でエラーが発生しました`, error.message)}`);
                 logger.errorToFile(`質問の取得でエラーが発生`, error);
+                await interaction.editReply(`${messenger.errorMessages(`質問の取得でエラーが発生しました`, error.message)}`);
             }
         }
         // インタラクションが特定のチャンネルでなければ何もしない

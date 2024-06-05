@@ -69,16 +69,25 @@ module.exports = {
                             size: size
                         });
                         const answer = completion.data[0];
-                        await interaction.editReply(`${messenger.answerMessages(answer.url, openAiEmoji)}\r\n`);
+
                         logger.logToFile(`生成イラスト : ${answer.url}`); // 生成イラストのURLをコンソールに出力
+                        await interaction.editReply(`${messenger.answerMessages(answer.url, openAiEmoji)}\r\n`);
                     } catch (error) {
-                        await interaction.editReply(`${messenger.errorMessages(`OpenAI API のイラスト生成でエラーが発生しました`, error.message)}`);
-                        logger.errorToFile(`OpenAI API のイラスト生成でエラーが発生`, error);
+                        // Discord の文字数制限の場合
+                        if (error.message.includes('Invalid Form Body')) {
+                            logger.errorToFile(`Discord 文字数制限が発生`, error);
+                            await interaction.editReply(`${messenger.errorMessages(`Discord 文字数制限が発生しました`, error.message)}`);
+                        }
+                        // その他のエラーの場合
+                        else {
+                            logger.errorToFile(`OpenAI API のイラスト生成でエラーが発生`, error);
+                            await interaction.editReply(`${messenger.errorMessages(`OpenAI API のイラスト生成でエラーが発生しました`, error.message)}`);
+                        }
                     }
                 })();
             } catch (error) {
-                await interaction.editReply(`${messenger.errorMessages(`依頼の取得でエラーが発生しました`, error.message)}`);
                 logger.errorToFile(`依頼の取得でエラーが発生`, error);
+                await interaction.editReply(`${messenger.errorMessages(`依頼の取得でエラーが発生しました`, error.message)}`);
             }
         }
         // インタラクションが特定のチャンネルでなければ何もしない
