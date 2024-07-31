@@ -108,7 +108,25 @@ module.exports = {
                         const answer = completion.choices[0];
 
                         logger.logToFile(`回答 : ${answer.message.content.trim()}`); // 回答をコンソールに出力
-                        await interaction.editReply(`${messenger.answerMessages(answer.message.content, openAiEmoji)}\r\n`);
+
+                        // 回答を分割
+                        const messages = splitAnswer(answer.message.content);
+
+                        // 単一メッセージの場合
+                        if (messages.length === 1) {
+                            await interaction.editReply({ content: `${messenger.answerMessages(messages[0], openAiEmoji)}\r\n`, ephemeral: !isPublic });
+                        }
+                        // 複数メッセージの場合
+                        else {
+                            for (let i = 0; i < messages.length; i++) {
+                                const message = messages[i];
+                                if (i === 0) {
+                                    await interaction.editReply({ content: `${messenger.answerFollowMessages(message, openAiEmoji, i + 1, messages.length)}\r\n`, ephemeral: !isPublic });
+                                } else {
+                                    await interaction.followUp({ content: `${messenger.answerFollowMessages(message, openAiEmoji, i + 1, messages.length)}\r\n`, ephemeral: !isPublic });
+                                }
+                            }
+                        }
                     } catch (error) {
                         // Discord の文字数制限の場合
                         if (error.message.includes('Invalid Form Body')) {
@@ -163,7 +181,7 @@ function promptGenerator(prompt) {
 ・プログラム内で定義されている関数はどのような機能を持つのか，を説明してください`;
         case 'code_review':
             return `ユーザが提供する全ての「内容」に対して，あなたは専門的知見をもった熟練のプログラマとしてソースコードをレビューしてください．ただし，改行文字が脱落することがあります．
-なお，次の観点を必ず含めてください．対象が無ければ言及する必要はありません．
+なお，次の観点を必ず含めてください．指摘事項が無い場合は言及しないでください．
 ・推奨されなくなった実装の指摘，および修正案．例 : \`substr\` → \`substring\`
 ・\`if\` 条件式の簡潔化の指摘，および修正案．例 : \`if (a == 0) { ... }\` → \`if (!a) { ... }\`
 ・実装に至った経緯や選択されている言語などについては，正しいものとしてレビュー対象に含まない`;
@@ -190,4 +208,67 @@ Subject は英語で簡潔な 30 字程度の要約としてください．
         default:
             return `ユーザからの「質問」に対して，適切な回答を行ってください．`;
     }
+};
+
+function splitAnswer(answer) {
+    const maxLen = 1900; // Discord の文字数制限に余裕をもたせる
+    let messages = [];
+    let currentMessage = '';
+    let inCodeBlock = false;
+    let codeLanguage = '';
+
+    const lines = answer.split('\n');
+
+    for (const line of lines) {
+        // コードブロックの開始または終了を検出
+        if (line.startsWith('```')) {
+            // コードブロックの開始地点
+            if (!inCodeBlock) {
+                inCodeBlock = true;
+                codeLanguage = line.slice(3).trim();
+                if (currentMessage.length + line.length > maxLen) {
+                    messages.push(currentMessage.trim());
+                    currentMessage = '';
+                }
+                currentMessage += line + '\n';
+            }
+            // コードブロックの終了地点
+            else {
+                inCodeBlock = false;
+                currentMessage += line + '\n';
+                if (currentMessage.length > maxLen) {
+                    messages.push(currentMessage.trim());
+                    currentMessage = '```' + codeLanguage + '\n';
+                }
+            }
+        }
+        // コードブロック内の処理
+        else if (inCodeBlock) {
+            // コードブロック内で分割する場合、閉じタグと開始タグを追加
+            if (currentMessage.length + line.length > maxLen) {
+                currentMessage += '```\n';
+                messages.push(currentMessage.trim());
+                currentMessage = '```' + codeLanguage + '\n' + line + '\n';
+            } else {
+                currentMessage += line + '\n';
+            }
+        }
+        // 通常のメッセージ処理
+        else {
+            // 最大長を超える場合に新しいメッセージを開始
+            if (currentMessage.length + line.length > maxLen) {
+                messages.push(currentMessage.trim());
+                currentMessage = line + '\n';
+            } else {
+                currentMessage += line + '\n';
+            }
+        }
+    }
+
+    // 残りのメッセージを追加
+    if (currentMessage.length > 0) {
+        messages.push(currentMessage.trim());
+    }
+
+    return messages;
 };

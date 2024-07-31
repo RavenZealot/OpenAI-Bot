@@ -10,6 +10,11 @@ module.exports = {
         return `<:OpenAI:${openAiEmoji}> : ${answer.trim()}`;
     },
 
+    // 分割回答メッセージを生成
+    answerFollowMessages: function (answer, openAiEmoji, i, length) {
+        return `<:OpenAI:${openAiEmoji}> （**${i}** / **${length}**）\n${answer.trim()}`;
+    },
+
     // エラーメッセージを生成
     errorMessages: function (answer, error) {
         return `:warning: **エラー** : ${answer} :warning:\n\`\`\`${error}\`\`\``;
