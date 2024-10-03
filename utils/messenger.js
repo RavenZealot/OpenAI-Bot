@@ -23,10 +23,5 @@ module.exports = {
     // 使用不可メッセージを生成
     usageMessages: function (answer) {
         return `:prohibited: **エラー** : ${answer} :prohibited:`;
-    },
-
-    // 翻訳メッセージを生成
-    deepLMessages(answer, deepLEmoji, target) {
-        return `<:DeepL:${deepLEmoji}> \`${answer.detectedSourceLang} → ${target}\` : ${answer.text.trim()}`;
     }
 };

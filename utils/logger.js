@@ -6,7 +6,7 @@ module.exports = {
     logToFile: function (message) {
         const now = new Date();
         const timestamp = now.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
-        const logFilePath = PATH.resolve(__dirname, `../gpt-bot.log`);
+        const logFilePath = PATH.resolve(__dirname, `../openai-bot.log`);
 
         const logMessage = `${timestamp} - ${message}`;
         FS.appendFileSync(logFilePath, logMessage + '\n');
@@ -17,7 +17,7 @@ module.exports = {
     errorToFile: function (message, error) {
         const now = new Date();
         const timestamp = now.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
-        const logFilePath = PATH.resolve(__dirname, `../gpt-bot.log`);
+        const logFilePath = PATH.resolve(__dirname, `../openai-bot.log`);
 
         // ログにはフルスタックを，コンソールにはエラーメッセージのみを出力
         const logMessage = `${timestamp} - ${message} : ${error.stack}`;
@@ -28,7 +28,7 @@ module.exports = {
 
     // コマンドを起動したユーザ情報をファイルにのみ書き込む
     commandToFile: function (interaction) {
-        const logFilePath = PATH.resolve(__dirname, `../gpt-bot.log`);
+        const logFilePath = PATH.resolve(__dirname, `../openai-bot.log`);
 
         const userInfo = [
             `---------- ユーザ情報 ----------`,
@@ -43,8 +43,8 @@ module.exports = {
 
     // ログファイルのバックアップと新規作成
     logRotate: function () {
-        const logFilePath = PATH.resolve(__dirname, `../gpt-bot.log`);
-        const backupLogFilePath = PATH.resolve(__dirname, `../gpt-bot-backup.log`);
+        const logFilePath = PATH.resolve(__dirname, `../openai-bot.log`);
+        const backupLogFilePath = PATH.resolve(__dirname, `../openai-bot-backup.log`);
 
         // バックアップファイルが存在する場合は削除
         if (FS.existsSync(backupLogFilePath)) {

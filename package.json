@@ -1,5 +1,5 @@
 {
-    "name": "gpt-bot",
+    "name": "openai-bot",
     "version": "1.0.0",
     "description": "",
     "main": "bot/index.js",
@@ -9,7 +9,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-                "discord.js": "^14.16.0",
+        "discord.js": "^14.16.0",
         "dotenv": "^16.4.0",
         "openai": "^4.67.0"
     }
