@@ -1,3 +1,2 @@
 /.env
-/openai-bot.log
-/openai-bot-backup.log
+/openai-bot*.log

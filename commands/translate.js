@@ -85,12 +85,19 @@ module.exports = {
                 // OpenAI に依頼文を送信し翻訳文を取得
                 (async () => {
                     try {
+                        const messages = [
+                            { role: 'system', content: `${prompt}` },
+                            { role: 'user', content: `${request}` }
+                        ];
+
                         const completion = await OPENAI.chat.completions.create({
-                            model: 'gpt-4-turbo-preview',
-                            messages: [{ role: 'system', content: `${prompt}` }, { role: 'user', content: `${request}` }]
+                            model: 'gpt-4o-mini',
+                            messages: messages
                         });
                         const answer = completion.choices[0];
+
                         logger.logToFile(`翻訳文 : ${answer.message.content.trim()}`); // 翻訳文をコンソールに出力
+
                         await interaction.editReply(`${messenger.answerMessages(answer.message.content, openAiEmoji, target)}\r\n`);
                     } catch (error) {
                         // Discord の文字数制限の場合

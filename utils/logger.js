@@ -26,6 +26,32 @@ module.exports = {
         console.error(errorMessage);
     },
 
+    // 直前の会話をファイルに書き込む
+    answerToFile: function (userid, question, answer) {
+        const logFilePath = PATH.resolve(__dirname, `../openai-bot-${userid}.log`);
+
+        const previousQA = [
+            `---------- 直前の会話 ----------`,
+            `質問 : ${question}`,
+            `回答 : ${answer}`,
+            `--------------------------------`
+        ].join('\n');
+
+        FS.writeFileSync(logFilePath, previousQA + '\n');
+    },
+
+    // 直前の会話をファイルから読み込む
+    answerFromFile: function (userid) {
+        const logFilePath = PATH.resolve(__dirname, `../openai-bot-${userid}.log`);
+
+        let previousQA = '';
+        if (FS.existsSync(logFilePath)) {
+            previousQA = FS.readFileSync(logFilePath, 'utf-8');
+        }
+
+        return previousQA;
+    },
+
     // コマンドを起動したユーザ情報をファイルにのみ書き込む
     commandToFile: function (interaction) {
         const logFilePath = PATH.resolve(__dirname, `../openai-bot.log`);

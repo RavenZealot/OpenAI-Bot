@@ -70,6 +70,12 @@ module.exports = {
                 ]
             },
             {
+                name: '直前の会話を利用',
+                description: '回答の生成に直前の質問と回答を利用するかどうかを選択してください．',
+                type: 5,
+                required: false
+            },
+            {
                 name: '公開',
                 description: '他のユーザに公開するかどうかを選択してください．',
                 type: 5,
@@ -92,41 +98,61 @@ module.exports = {
                 const prompt = promptGenerator(promptParam);
                 logger.logToFile(`指示 : ${prompt.trim()}`); // 指示をコンソールに出力
                 logger.logToFile(`質問 : ${request.trim()}`); // 質問をコンソールに出力
+                // 会話利用設定を取得
+                const usePrevious = interaction.options.getBoolean('直前の会話を利用');
                 // 公開設定を取得
                 const isPublic = interaction.options.getBoolean('公開');
 
                 // interaction の返信を遅延させる
                 await interaction.deferReply({ ephemeral: !isPublic });
 
+                // 直前の会話を利用する場合
+                let previousQA = '';
+                if (usePrevious) {
+                    previousQA = logger.answerFromFile(interaction.user.id);
+                    logger.logToFile(`前回 : ${previousQA.trim()}`); // 直前の会話をコンソールに出力
+                }
+
                 // OpenAI に質問を送信し回答を取得
                 (async () => {
                     try {
+                        const messages = [
+                            { role: 'system', content: `${prompt}` },
+                        ];
+                        if (usePrevious && previousQA) {
+                            messages.push({ role: 'assistant', content: `${previousQA}` });
+                        }
+                        messages.push({ role: 'user', content: `${request}` });
+
                         const completion = await OPENAI.chat.completions.create({
                             model: 'gpt-4o',
-                            messages: [{ role: 'system', content: `${prompt}` }, { role: 'user', content: `${request}` }]
+                            messages: messages
                         });
                         const answer = completion.choices[0];
 
                         logger.logToFile(`回答 : ${answer.message.content.trim()}`); // 回答をコンソールに出力
 
                         // 回答を分割
-                        const messages = splitAnswer(answer.message.content);
+                        const splitMessages = splitAnswer(answer.message.content);
 
                         // 単一メッセージの場合
-                        if (messages.length === 1) {
-                            await interaction.editReply({ content: `${messenger.answerMessages(messages[0], openAiEmoji)}\r\n`, ephemeral: !isPublic });
+                        if (splitMessages.length === 1) {
+                            await interaction.editReply({ content: `${messenger.answerMessages(splitMessages[0], openAiEmoji)}\r\n`, ephemeral: !isPublic });
                         }
                         // 複数メッセージの場合
                         else {
-                            for (let i = 0; i < messages.length; i++) {
-                                const message = messages[i];
+                            for (let i = 0; i < splitMessages.length; i++) {
+                                const message = splitMessages[i];
                                 if (i === 0) {
-                                    await interaction.editReply({ content: `${messenger.answerFollowMessages(message, openAiEmoji, i + 1, messages.length)}\r\n`, ephemeral: !isPublic });
+                                    await interaction.editReply({ content: `${messenger.answerFollowMessages(message, openAiEmoji, i + 1, splitMessages.length)}\r\n`, ephemeral: !isPublic });
                                 } else {
-                                    await interaction.followUp({ content: `${messenger.answerFollowMessages(message, openAiEmoji, i + 1, messages.length)}\r\n`, ephemeral: !isPublic });
+                                    await interaction.followUp({ content: `${messenger.answerFollowMessages(message, openAiEmoji, i + 1, splitMessages.length)}\r\n`, ephemeral: !isPublic });
                                 }
                             }
                         }
+
+                        // 質問と回答をファイルに書き込む
+                        logger.answerToFile(interaction.user.id, request.trim(), answer.message.content.trim());
                     } catch (error) {
                         // Discord の文字数制限の場合
                         if (error.message.includes('Invalid Form Body')) {
