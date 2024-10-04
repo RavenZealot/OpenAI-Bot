@@ -5,17 +5,18 @@ AI chat bot for Discord using OpenAI API
 ## Reference
 
 - [API Reference - OpenAI API](https://platform.openai.com/docs/api-reference/introduction)
-- [Introduction - OpenAI API](https://platform.openai.com/docs/introduction)
+- [Overview - OpenAI API](https://platform.openai.com/docs/overview)
 
 ## Required (Only once)
 
 - `.env` (Root directory)
-  - OPENAI_ORG_ID : OpenAI [Organization ID](https://platform.openai.com/account/organization)
-  - OPENAI_API_KEY : OpenAI [API keys](https://platform.openai.com/account/api-keys)
+  - OPENAI_ORG_ID : OpenAI [Organization ID](https://platform.openai.com/settings/organization/general)
+  - OPENAI_API_KEY : OpenAI [API keys](https://platform.openai.com/organization/api-keys)
+  - OPENAI_PROJECT_ID : OpenAI [Project ID](https://platform.openai.com/organization/projects)
   - BOT_TOKEN : Discord Application [Token](https://discord.com/developers/applications)
-  - CHAT_CHANNEL_ID : for [Chat completions](https://platform.openai.com/docs/guides/chat/introduction)
+  - CHAT_CHANNEL_ID : for [Text generation](https://platform.openai.com/docs/guides/text-generation)
     Multiple designations possible
-  - IMAGE_CHANNEL_ID : for [Image generation](https://platform.openai.com/docs/guides/images/language-specific-tips)
+  - IMAGE_CHANNEL_ID : for [Image generation](https://platform.openai.com/docs/guides/images)
     Multiple designations possible
   - OPENAI_EMOJI : Emoji for OpenAI API
 - Discord Application Generated URL
