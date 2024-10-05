@@ -37,7 +37,7 @@ module.exports = {
             },
             {
                 name: '公開',
-                description: '他のユーザに公開するかどうかを選択してください．',
+                description: '他のユーザに公開するかを選択してください．',
                 type: 5,
                 required: false
             }
@@ -56,7 +56,7 @@ module.exports = {
                 const size = interaction.options.getString('画像サイズ');
                 logger.logToFile(`依頼 : ${request.trim()}（${size}）`); // 依頼をコンソールに出力
                 // 公開設定を取得
-                const isPublic = interaction.options.getBoolean('公開');
+                const isPublic = interaction.options.getBoolean('公開') ?? true;
 
                 // interaction の返信を遅延させる
                 await interaction.deferReply({ ephemeral: !isPublic });

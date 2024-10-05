@@ -73,19 +73,19 @@ module.exports = {
             },
             {
                 name: '添付ファイル',
-                description: 'ファイルを添付することができます（テキストファイルのみ）．',
+                description: 'ファイルを添付してください（テキストファイルのみ）．',
                 type: 11,
                 required: false
             },
             {
                 name: '直前の会話を利用',
-                description: '回答の生成に直前の質問と回答を利用するかどうかを選択してください．',
+                description: '回答の生成に直前の質問と回答を利用するかを選択してください．',
                 type: 5,
                 required: false
             },
             {
                 name: '公開',
-                description: '他のユーザに公開するかどうかを選択してください．',
+                description: '他のユーザに公開するかを選択してください．',
                 type: 5,
                 required: false
             }
@@ -101,36 +101,31 @@ module.exports = {
             try {
                 // 質問を取得
                 const request = interaction.options.getString('質問');
-                // 添付ファイルがある場合は内容を質問文に追加
-                let attachmentContent = '';
-                if (interaction.options.get('添付ファイル')) {
-                    const attachment = interaction.options.getAttachment('添付ファイル');
-                    if (attachment) {
-                        // 添付ファイルがテキストの場合は質問文に追加
-                        if (attachment.contentType.startsWith('text/')) {
-                            try {
-                                const response = await FETCH(attachment.url);
-                                const buffer = await response.buffer();
-                                attachmentContent = buffer.toString();
-                            } catch (error) {
-                                logger.errorToFile(`添付ファイルの取得中にエラーが発生`, error);
-                            }
-                        }
-                    }
-                }
                 // 選択されたプロンプト方式から質問文を生成
                 const promptParam = interaction.options.getString('プロンプト');
                 const prompt = promptGenerator(promptParam);
                 logger.logToFile(`指示 : ${prompt.trim()}`); // 指示をコンソールに出力
                 logger.logToFile(`質問 : ${request.trim()}`); // 質問をコンソールに出力
-                // 添付ファイルがある場合は内容をログに追加
-                if (attachmentContent) {
+                // 添付ファイルがある場合は内容を取得
+                let attachmentContent = '';
+                if (interaction.options.get('添付ファイル')) {
+                    const attachment = interaction.options.getAttachment('添付ファイル');
+                    // 添付ファイルがテキストの場合は質問文に追加
+                    if (attachment.contentType.startsWith('text/')) {
+                        try {
+                            const response = await FETCH(attachment.url);
+                            const buffer = await response.buffer();
+                            attachmentContent = buffer.toString();
+                        } catch (error) {
+                            logger.errorToFile(`添付ファイルの取得中にエラーが発生`, error);
+                        }
+                    }
                     logger.logToFileForAttachment(`${attachmentContent.trim()}`);
                 }
                 // 会話利用設定を取得
                 const usePrevious = interaction.options.getBoolean('直前の会話を利用');
                 // 公開設定を取得
-                const isPublic = interaction.options.getBoolean('公開');
+                const isPublic = interaction.options.getBoolean('公開') ?? true;
 
                 // interaction の返信を遅延させる
                 await interaction.deferReply({ ephemeral: !isPublic });
