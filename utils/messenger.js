@@ -1,8 +1,7 @@
 module.exports = {
-    // 質問メッセージを生成
-    //! Discord の UI でリクエストは保存されるため，使用しない
-    requestMessages: function (request, promptParam) {
-        return `> :speaking_head: \`${promptParam}\` : ${request.trim()}`;
+    // ヘルプメッセージを生成
+    helpMessages: function (answer) {
+        return `:information_source: : ${answer.trim()}`;
     },
 
     // 回答メッセージを生成

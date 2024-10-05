@@ -33,7 +33,6 @@ module.exports = {
     async execute(interaction) {
         const channelId = process.env.CHAT_CHANNEL_ID.split(',');
         channelId.push(process.env.IMAGE_CHANNEL_ID.split(','));
-        const openAiEmoji = process.env.OPENAI_EMOJI;
         // チャンネルが `ChatGPT` 用または `DALL·E` 用の場合に実行
         if (channelId.includes(interaction.channelId)) {
             try {
@@ -47,7 +46,7 @@ module.exports = {
                 (async () => {
                     try {
                         const answer = helpGenerator(target);
-                        await interaction.editReply(`${messenger.answerMessages(answer, openAiEmoji)}\r\n`);
+                        await interaction.editReply(`${messenger.helpMessages(answer)}\r\n`);
                     } catch (error) {
                         logger.errorToFile(`対象コマンドの解説でエラーが発生`, error);
                         await interaction.editReply(`${messenger.errorMessages(`対象コマンドの解説でエラーが発生しました`, error.message)}`);
