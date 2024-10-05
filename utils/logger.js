@@ -13,6 +13,15 @@ module.exports = {
         console.log(logMessage);
     },
 
+    // 添付ログをファイルに書き込む
+    logToFileForAttachment: function (attachment) {
+        const now = new Date();
+        const timestamp = now.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+        const logFilePath = PATH.resolve(__dirname, `../openai-bot.log`);
+        const logMessage = `${timestamp} - 添付 : \r\n--------------------\r\n${attachment}\r\n--------------------\r\n`;
+        FS.appendFileSync(logFilePath, logMessage + '\n');
+    },
+
     // エラーログをファイルに書き込む
     errorToFile: function (message, error) {
         const now = new Date();
