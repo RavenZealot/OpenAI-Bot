@@ -98,7 +98,7 @@ module.exports = {
 
                         logger.logToFile(`翻訳文 : ${answer.message.content.trim()}`); // 翻訳文をコンソールに出力
 
-                        await interaction.editReply(`${messenger.answerMessages(answer.message.content, openAiEmoji, target)}\r\n`);
+                        await interaction.editReply(`${messenger.answerMessages(openAiEmoji, answer.message.content, target)}\r\n`);
                     } catch (error) {
                         // Discord の文字数制限の場合
                         if (error.message.includes('Invalid Form Body')) {

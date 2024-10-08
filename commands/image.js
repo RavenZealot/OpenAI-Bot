@@ -74,7 +74,7 @@ module.exports = {
 
                         // Embed メッセージを作成
                         const embed = new EmbedBuilder()
-                            .setTitle(`<:OpenAI:${openAiEmoji}> : 生成イラスト`)
+                            .setTitle(`${openAiEmoji} : 生成イラスト`)
                             .setDescription(`依頼 : ${request}`)
                             .setImage(answer.url)
                             .addFields({ name: '画像サイズ', value: `${size}`, inline: true })

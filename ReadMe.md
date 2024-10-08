@@ -18,7 +18,7 @@ AI chat bot for Discord using OpenAI API
     Multiple designations possible
   - IMAGE_CHANNEL_ID : for [Image generation](https://platform.openai.com/docs/guides/images)
     Multiple designations possible
-  - OPENAI_EMOJI : Emoji for OpenAI API
+  - OPENAI_EMOJI : Emoji for OpenAI API (e.g. `<:OpenAI:1234567890123456789>`)
 - Discord Application Generated URL
 
 ## Run

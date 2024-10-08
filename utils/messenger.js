@@ -5,13 +5,13 @@ module.exports = {
     },
 
     // 回答メッセージを生成
-    answerMessages: function (answer, openAiEmoji) {
-        return `<:OpenAI:${openAiEmoji}> : ${answer.trim()}`;
+    answerMessages: function (emoji, answer) {
+        return `${emoji} : ${answer.trim()}`;
     },
 
     // 分割回答メッセージを生成
-    answerFollowMessages: function (answer, openAiEmoji, i, length) {
-        return `<:OpenAI:${openAiEmoji}> （**${i}** / **${length}**）\n${answer.trim()}`;
+    answerFollowMessages: function (emoji, answer, i, length) {
+        return `${emoji} （**${i}** / **${length}**）\n${answer.trim()}`;
     },
 
     // エラーメッセージを生成

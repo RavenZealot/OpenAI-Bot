@@ -164,16 +164,16 @@ module.exports = {
 
                         // 単一メッセージの場合
                         if (splitMessages.length === 1) {
-                            await interaction.editReply({ content: `${messenger.answerMessages(splitMessages[0], openAiEmoji)}\r\n`, ephemeral: !isPublic });
+                            await interaction.editReply({ content: `${messenger.answerMessages(openAiEmoji, splitMessages[0])}\r\n`, ephemeral: !isPublic });
                         }
                         // 複数メッセージの場合
                         else {
                             for (let i = 0; i < splitMessages.length; i++) {
                                 const message = splitMessages[i];
                                 if (i === 0) {
-                                    await interaction.editReply({ content: `${messenger.answerFollowMessages(message, openAiEmoji, i + 1, splitMessages.length)}\r\n`, ephemeral: !isPublic });
+                                    await interaction.editReply({ content: `${messenger.answerFollowMessages(openAiEmoji, message, i + 1, splitMessages.length)}\r\n`, ephemeral: !isPublic });
                                 } else {
-                                    await interaction.followUp({ content: `${messenger.answerFollowMessages(message, openAiEmoji, i + 1, splitMessages.length)}\r\n`, ephemeral: !isPublic });
+                                    await interaction.followUp({ content: `${messenger.answerFollowMessages(openAiEmoji, message, i + 1, splitMessages.length)}\r\n`, ephemeral: !isPublic });
                                 }
                             }
                         }
