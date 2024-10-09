@@ -33,7 +33,7 @@ module.exports = {
     async execute(interaction) {
         const channelId = process.env.CHAT_CHANNEL_ID.split(',');
         channelId.push(process.env.IMAGE_CHANNEL_ID.split(','));
-        // チャンネルが `ChatGPT` 用または `DALL·E` 用の場合に実行
+        // チャンネルが `GPT` 用または `DALL·E` 用の場合に実行
         if (channelId.includes(interaction.channelId)) {
             try {
                 // 対象コマンドを取得

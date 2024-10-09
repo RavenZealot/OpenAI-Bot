@@ -95,7 +95,7 @@ module.exports = {
     async execute(interaction, OPENAI) {
         const channelId = process.env.CHAT_CHANNEL_ID.split(',');
         const openAiEmoji = process.env.OPENAI_EMOJI;
-        // チャンネルが `ChatGPT` 用の場合に実行
+        // チャンネルが `GPT` 用の場合に実行
         if (channelId.includes(interaction.channelId)) {
             // `chat` コマンドが呼び出された場合 OpenAI に質問を送信
             try {
@@ -106,6 +106,7 @@ module.exports = {
                 const prompt = promptGenerator(promptParam);
                 logger.logToFile(`指示 : ${prompt.trim()}`); // 指示をコンソールに出力
                 logger.logToFile(`質問 : ${request.trim()}`); // 質問をコンソールに出力
+
                 // 添付ファイルがある場合は内容を取得
                 let attachmentContent = '';
                 if (interaction.options.get('添付ファイル')) {
@@ -122,6 +123,7 @@ module.exports = {
                     }
                     logger.logToFileForAttachment(`${attachmentContent.trim()}`);
                 }
+
                 // 会話利用設定を取得
                 const usePrevious = interaction.options.getBoolean('直前の会話を利用');
                 // 公開設定を取得
@@ -139,6 +141,7 @@ module.exports = {
 
                 // OpenAI に質問を送信し回答を取得
                 (async () => {
+                    let usage = [];
                     try {
                         const messages = [
                             { role: 'system', content: `${prompt}` },
@@ -156,12 +159,12 @@ module.exports = {
                             messages: messages
                         });
                         const answer = completion.choices[0];
-
                         logger.logToFile(`回答 : ${answer.message.content.trim()}`); // 回答をコンソールに出力
+                        // 使用トークン情報を取得
+                        usage = completion.usage;
 
                         // 回答を分割
                         const splitMessages = splitAnswer(answer.message.content);
-
                         // 単一メッセージの場合
                         if (splitMessages.length === 1) {
                             await interaction.editReply({ content: `${messenger.answerMessages(openAiEmoji, splitMessages[0])}\r\n`, ephemeral: !isPublic });
@@ -191,6 +194,9 @@ module.exports = {
                             logger.errorToFile(`OpenAI API の返信でエラーが発生`, error);
                             await interaction.editReply(`${messenger.errorMessages(`OpenAI API の返信でエラーが発生しました`, error.message)}`);
                         }
+                    } finally {
+                        // 使用トークンをロギング
+                        logger.tokenToFile(usage);
                     }
                 })();
             } catch (error) {
@@ -271,7 +277,6 @@ function splitAnswer(answer) {
     let codeLanguage = '';
 
     const lines = answer.split('\n');
-
     for (const line of lines) {
         // コードブロックの開始または終了を検出
         if (line.startsWith('```')) {

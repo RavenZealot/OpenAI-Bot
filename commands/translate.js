@@ -63,7 +63,7 @@ module.exports = {
     async execute(interaction, OPENAI) {
         const channelId = process.env.CHAT_CHANNEL_ID.split(',');
         const openAiEmoji = process.env.OPENAI_EMOJI;
-        // チャンネルが `ChatGPT` 用の場合に実行
+        // チャンネルが `GPT` 用の場合に実行
         if (channelId.includes(interaction.channelId)) {
             // `translate` コマンドが呼び出された場合 OpenAI に依頼文を送信
             try {
@@ -76,6 +76,7 @@ module.exports = {
                 const prompt = promptGenerator(promptParam, target);
                 logger.logToFile(`指示 : ${prompt.trim()}`); // 指示をコンソールに出力
                 logger.logToFile(`原文 : ${request.trim()}`); // 原文をコンソールに出力
+
                 // 公開設定を取得
                 const isPublic = interaction.options.getBoolean('公開') ?? true;
 
@@ -84,6 +85,7 @@ module.exports = {
 
                 // OpenAI に依頼文を送信し翻訳文を取得
                 (async () => {
+                    let usage = [];
                     try {
                         const messages = [
                             { role: 'system', content: `${prompt}` },
@@ -95,8 +97,9 @@ module.exports = {
                             messages: messages
                         });
                         const answer = completion.choices[0];
-
                         logger.logToFile(`翻訳文 : ${answer.message.content.trim()}`); // 翻訳文をコンソールに出力
+                        // 使用トークン情報を取得
+                        usage = completion.usage;
 
                         await interaction.editReply(`${messenger.answerMessages(openAiEmoji, answer.message.content, target)}\r\n`);
                     } catch (error) {
@@ -110,6 +113,9 @@ module.exports = {
                             logger.errorToFile(`OpenAI API の返信でエラーが発生`, error);
                             await interaction.editReply(`${messenger.errorMessages(`OpenAI API の返信でエラーが発生しました`, error.message)}`);
                         }
+                    } finally {
+                        // 使用トークンをロギング
+                        logger.tokenToFile(usage);
                     }
                 })();
             } catch (error) {
