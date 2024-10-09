@@ -1,5 +1,3 @@
-const FETCH = require('node-fetch');
-
 const logger = require('../utils/logger');
 const messenger = require('../utils/messenger');
 
@@ -114,9 +112,9 @@ module.exports = {
                     // 添付ファイルがテキストの場合は質問文に追加
                     if (attachment.contentType.startsWith('text/')) {
                         try {
-                            const response = await FETCH(attachment.url);
-                            const buffer = await response.buffer();
-                            attachmentContent = buffer.toString();
+                            const response = await fetch(attachment.url);
+                            const arrayBuffer = await response.arrayBuffer();
+                            attachmentContent = Buffer.from(arrayBuffer).toString();
                         } catch (error) {
                             logger.errorToFile(`添付ファイルの取得中にエラーが発生`, error);
                         }
