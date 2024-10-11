@@ -180,7 +180,7 @@ module.exports = {
                         }
 
                         // 質問と回答をファイルに書き込む
-                        logger.answerToFile(interaction.user.id, request.trim(), answer.message.content.trim());
+                        logger.answerToFile(interaction.user.id, request.trim(), attachmentContent.trim(), answer.message.content.trim());
                     } catch (error) {
                         // Discord の文字数制限の場合
                         if (error.message.includes('Invalid Form Body')) {
