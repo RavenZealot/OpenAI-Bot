@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder: EMBED } = require('discord.js');
 
 const logger = require('../utils/logger');
 const messenger = require('../utils/messenger');
@@ -54,7 +54,7 @@ module.exports = {
                 // 依頼を取得
                 const request = interaction.options.getString('依頼');
                 const size = interaction.options.getString('画像サイズ');
-                logger.logToFile(`依頼 : ${request.trim()}（${size}）`); // 依頼をコンソールに出力
+                await logger.logToFile(`依頼 : ${request.trim()}（${size}）`); // 依頼をコンソールに出力
 
                 // 公開設定を取得
                 const isPublic = interaction.options.getBoolean('公開') ?? true;
@@ -72,10 +72,10 @@ module.exports = {
                             size: size
                         });
                         const answer = completion.data[0];
-                        logger.logToFile(`生成イラスト : ${answer.url}`); // 生成イラストのURLをコンソールに出力
+                        await logger.logToFile(`生成イラスト : ${answer.url}`); // 生成イラストのURLをコンソールに出力
 
                         // Embed メッセージを作成
-                        const embed = new EmbedBuilder()
+                        const embed = new EMBED()
                             .setTitle(`${openAiEmoji} : 生成イラスト`)
                             .setDescription(`依頼 : ${request}`)
                             .setImage(answer.url)
@@ -86,18 +86,18 @@ module.exports = {
                     } catch (error) {
                         // Discord の文字数制限の場合
                         if (error.message.includes('Invalid Form Body')) {
-                            logger.errorToFile(`Discord 文字数制限が発生`, error);
+                            await logger.errorToFile(`Discord 文字数制限が発生`, error);
                             await interaction.editReply(`${messenger.errorMessages(`Discord 文字数制限が発生しました`, error.message)}`);
                         }
                         // その他のエラーの場合
                         else {
-                            logger.errorToFile(`OpenAI API のイラスト生成でエラーが発生`, error);
+                            await logger.errorToFile(`OpenAI API のイラスト生成でエラーが発生`, error);
                             await interaction.editReply(`${messenger.errorMessages(`OpenAI API のイラスト生成でエラーが発生しました`, error.message)}`);
                         }
                     }
                 })();
             } catch (error) {
-                logger.errorToFile(`依頼の取得でエラーが発生`, error);
+                await logger.errorToFile(`依頼の取得でエラーが発生`, error);
                 await interaction.editReply(`${messenger.errorMessages(`依頼の取得でエラーが発生しました`, error.message)}`);
             }
         }

@@ -102,8 +102,8 @@ module.exports = {
                 // 選択されたプロンプト方式から質問文を生成
                 const promptParam = interaction.options.getString('プロンプト');
                 const prompt = promptGenerator(promptParam);
-                logger.logToFile(`指示 : ${prompt.trim()}`); // 指示をコンソールに出力
-                logger.logToFile(`質問 : ${request.trim()}`); // 質問をコンソールに出力
+                await logger.logToFile(`指示 : ${prompt.trim()}`); // 指示をコンソールに出力
+                await logger.logToFile(`質問 : ${request.trim()}`); // 質問をコンソールに出力
 
                 // 添付ファイルがある場合は内容を取得
                 let attachmentContent = '';
@@ -116,10 +116,10 @@ module.exports = {
                             const arrayBuffer = await response.arrayBuffer();
                             attachmentContent = Buffer.from(arrayBuffer).toString();
                         } catch (error) {
-                            logger.errorToFile(`添付ファイルの取得中にエラーが発生`, error);
+                            await logger.errorToFile(`添付ファイルの取得中にエラーが発生`, error);
                         }
                     }
-                    logger.logToFileForAttachment(`${attachmentContent.trim()}`);
+                    await logger.logToFileForAttachment(`${attachmentContent.trim()}`);
                 }
 
                 // 会話利用設定を取得
@@ -133,8 +133,12 @@ module.exports = {
                 // 直前の会話を利用する場合
                 let previousQA = '';
                 if (usePrevious) {
-                    previousQA = logger.answerFromFile(interaction.user.id);
-                    logger.logToFile(`前回 : ${previousQA.trim()}`); // 直前の会話をコンソールに出力
+                    try {
+                        previousQA = await logger.answerFromFile(interaction.user.id);
+                        await logger.logToFile(`前回 : ${previousQA.trim()}`);
+                    } catch (error) {
+                        await logger.errorToFile(`直前の会話の取得でエラーが発生`, error);
+                    }
                 }
 
                 // OpenAI に質問を送信し回答を取得
@@ -157,7 +161,7 @@ module.exports = {
                             messages: messages
                         });
                         const answer = completion.choices[0];
-                        logger.logToFile(`回答 : ${answer.message.content.trim()}`); // 回答をコンソールに出力
+                        await logger.logToFile(`回答 : ${answer.message.content.trim()}`); // 回答をコンソールに出力
                         // 使用トークン情報を取得
                         usage = completion.usage;
 
@@ -180,25 +184,25 @@ module.exports = {
                         }
 
                         // 質問と回答をファイルに書き込む
-                        logger.answerToFile(interaction.user.id, request.trim(), attachmentContent.trim(), answer.message.content.trim());
+                        await logger.answerToFile(interaction.user.id, request.trim(), attachmentContent.trim(), answer.message.content.trim());
                     } catch (error) {
                         // Discord の文字数制限の場合
                         if (error.message.includes('Invalid Form Body')) {
-                            logger.errorToFile(`Discord 文字数制限が発生`, error);
+                            await logger.errorToFile(`Discord 文字数制限が発生`, error);
                             await interaction.editReply(`${messenger.errorMessages(`Discord 文字数制限が発生しました`, error.message)}`);
                         }
                         // その他のエラーの場合
                         else {
-                            logger.errorToFile(`OpenAI API の返信でエラーが発生`, error);
+                            await logger.errorToFile(`OpenAI API の返信でエラーが発生`, error);
                             await interaction.editReply(`${messenger.errorMessages(`OpenAI API の返信でエラーが発生しました`, error.message)}`);
                         }
                     } finally {
                         // 使用トークンをロギング
-                        logger.tokenToFile(usage);
+                        await logger.tokenToFile(usage);
                     }
                 })();
             } catch (error) {
-                logger.errorToFile(`質問の取得でエラーが発生`, error);
+                await logger.errorToFile(`質問の取得でエラーが発生`, error);
                 await interaction.editReply(`${messenger.errorMessages(`質問の取得でエラーが発生しました`, error.message)}`);
             }
         }

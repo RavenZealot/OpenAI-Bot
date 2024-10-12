@@ -48,12 +48,12 @@ module.exports = {
                         const answer = helpGenerator(target);
                         await interaction.editReply(`${messenger.helpMessages(answer)}\r\n`);
                     } catch (error) {
-                        logger.errorToFile(`対象コマンドの解説でエラーが発生`, error);
+                        await logger.errorToFile(`対象コマンドの解説でエラーが発生`, error);
                         await interaction.editReply(`${messenger.errorMessages(`対象コマンドの解説でエラーが発生しました`, error.message)}`);
                     }
                 })();
             } catch (error) {
-                logger.errorToFile(`対象コマンドの取得でエラーが発生`, error);
+                await logger.errorToFile(`対象コマンドの取得でエラーが発生`, error);
                 await interaction.editReply(`${messenger.errorMessages(`対象コマンドの取得でエラーが発生しました`, error.message)}`);
             }
         }

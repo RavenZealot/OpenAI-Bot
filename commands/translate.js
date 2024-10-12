@@ -74,8 +74,8 @@ module.exports = {
                 // 選択されたプロンプト方式から依頼文を生成
                 const promptParam = interaction.options.getString('プロンプト');
                 const prompt = promptGenerator(promptParam, target);
-                logger.logToFile(`指示 : ${prompt.trim()}`); // 指示をコンソールに出力
-                logger.logToFile(`原文 : ${request.trim()}`); // 原文をコンソールに出力
+                await logger.logToFile(`指示 : ${prompt.trim()}`); // 指示をコンソールに出力
+                await logger.logToFile(`原文 : ${request.trim()}`); // 原文をコンソールに出力
 
                 // 公開設定を取得
                 const isPublic = interaction.options.getBoolean('公開') ?? true;
@@ -97,7 +97,7 @@ module.exports = {
                             messages: messages
                         });
                         const answer = completion.choices[0];
-                        logger.logToFile(`翻訳文 : ${answer.message.content.trim()}`); // 翻訳文をコンソールに出力
+                        await logger.logToFile(`翻訳文 : ${answer.message.content.trim()}`); // 翻訳文をコンソールに出力
                         // 使用トークン情報を取得
                         usage = completion.usage;
 
@@ -105,21 +105,21 @@ module.exports = {
                     } catch (error) {
                         // Discord の文字数制限の場合
                         if (error.message.includes('Invalid Form Body')) {
-                            logger.errorToFile(`Discord 文字数制限が発生`, error);
+                            await logger.errorToFile(`Discord 文字数制限が発生`, error);
                             await interaction.editReply(`${messenger.errorMessages(`Discord 文字数制限が発生しました`, error.message)}`);
                         }
                         // その他のエラーの場合
                         else {
-                            logger.errorToFile(`OpenAI API の返信でエラーが発生`, error);
+                            await logger.errorToFile(`OpenAI API の返信でエラーが発生`, error);
                             await interaction.editReply(`${messenger.errorMessages(`OpenAI API の返信でエラーが発生しました`, error.message)}`);
                         }
                     } finally {
                         // 使用トークンをロギング
-                        logger.tokenToFile(usage);
+                        await logger.tokenToFile(usage);
                     }
                 })();
             } catch (error) {
-                logger.errorToFile(`原文の取得でエラーが発生`, error);
+                await logger.errorToFile(`原文の取得でエラーが発生`, error);
                 await interaction.editReply(`${messenger.errorMessages(`原文の取得でエラーが発生しました`, error.message)}`);
             }
         }
