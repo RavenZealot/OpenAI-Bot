@@ -60,10 +60,10 @@ DISCORD.on('interactionCreate', async (interaction) => {
         await command.execute(interaction, OPENAI);
     } catch (error) {
         await interaction.reply({
-            content: messenger.errorMessages(`コマンドを実行中にエラーが発生しました`, error.message),
+            content: messenger.errorMessages('コマンドを実行中にエラーが発生しました', error.message),
             ephemeral: true
         });
-        await logger.errorToFile(`コマンドを実行中にエラーが発生`, error);
+        await logger.errorToFile('コマンドを実行中にエラーが発生', error);
     }
 });
 
@@ -72,8 +72,8 @@ DISCORD.login(process.env.BOT_TOKEN);
 
 // `../commands` ディレクトリ内のコマンドを読み込む
 async function loadCommands() {
-    const commandFiles = await FS.readdir(PATH.resolve(__dirname, `../commands`));
-    const jsFiles = commandFiles.filter((file) => file.endsWith(`.js`));
+    const commandFiles = await FS.readdir(PATH.resolve(__dirname, '../commands'));
+    const jsFiles = commandFiles.filter((file) => file.endsWith('.js'));
 
     for (const file of jsFiles) {
         const command = require(PATH.resolve(__dirname, `../commands/${file}`));

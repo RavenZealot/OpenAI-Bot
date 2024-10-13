@@ -88,8 +88,8 @@ module.exports = {
                     let usage = [];
                     try {
                         const messages = [
-                            { role: 'system', content: `${prompt}` },
-                            { role: 'user', content: `${request}` }
+                            { role: 'system', content: prompt },
+                            { role: 'user', content: request }
                         ];
 
                         const completion = await OPENAI.chat.completions.create({
@@ -101,17 +101,17 @@ module.exports = {
                         // 使用トークン情報を取得
                         usage = completion.usage;
 
-                        await interaction.editReply(`${messenger.answerMessages(openAiEmoji, answer.message.content, target)}\r\n`);
+                        await interaction.editReply(messenger.answerMessages(openAiEmoji, answer.message.content, target));
                     } catch (error) {
                         // Discord の文字数制限の場合
                         if (error.message.includes('Invalid Form Body')) {
-                            await logger.errorToFile(`Discord 文字数制限が発生`, error);
-                            await interaction.editReply(`${messenger.errorMessages(`Discord 文字数制限が発生しました`, error.message)}`);
+                            await logger.errorToFile('Discord 文字数制限が発生', error);
+                            await interaction.editReply(messenger.errorMessages('Discord 文字数制限が発生しました', error.message));
                         }
                         // その他のエラーの場合
                         else {
-                            await logger.errorToFile(`OpenAI API の返信でエラーが発生`, error);
-                            await interaction.editReply(`${messenger.errorMessages(`OpenAI API の返信でエラーが発生しました`, error.message)}`);
+                            await logger.errorToFile('OpenAI API の返信でエラーが発生', error);
+                            await interaction.editReply(messenger.errorMessages('OpenAI API の返信でエラーが発生しました', error.message));
                         }
                     } finally {
                         // 使用トークンをロギング
@@ -119,14 +119,14 @@ module.exports = {
                     }
                 })();
             } catch (error) {
-                await logger.errorToFile(`原文の取得でエラーが発生`, error);
-                await interaction.editReply(`${messenger.errorMessages(`原文の取得でエラーが発生しました`, error.message)}`);
+                await logger.errorToFile('原文の取得でエラーが発生', error);
+                await interaction.editReply(messenger.errorMessages('原文の取得でエラーが発生しました', error.message));
             }
         }
         // インタラクションが特定のチャンネルでなければ何もしない
         else {
             await interaction.reply({
-                content: `${messenger.usageMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`)}`,
+                content: messenger.usageMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`),
                 ephemeral: true
             });
             return;
@@ -138,21 +138,21 @@ function promptGenerator(prompt, target) {
     switch (prompt) {
         case 'easy':
             return `ユーザからの「原文」に対して，あなたは教科書制作会社の熟練翻訳家として，以下の「制約」を遵守して適切な翻訳を行ってください．
-### 制約\r\n・小学生にも理解しやすいこと\r\n・小学生に読み聞かせるようにすること\r\n・\"${target}\"に翻訳すること`;
+### 制約\n・小学生にも理解しやすいこと\n・小学生に読み聞かせるようにすること\n・\"${target}\"に翻訳すること`;
         case 'novel':
             return `ユーザからの「原文」に対して，あなたは出版社の熟練翻訳家として，以下の「制約」を遵守して適切な翻訳を行ってください．
-### 制約\r\n・小説に用いられる表現とすること\r\n・小説中の会話文とすること\r\n・\"${target}\"に翻訳すること`;
+### 制約\n・小説に用いられる表現とすること\n・小説中の会話文とすること\n・\"${target}\"に翻訳すること`;
         case 'poem':
             return `ユーザからの「原文」に対して，あなたは出版社の熟練翻訳家として，以下の「制約」を遵守して適切な翻訳を行ってください．
-### 制約\r\n・詩に用いられる表現とすること\r\n・語り手による口語とすること\r\n・\"${target}\"に翻訳すること`;
+### 制約\n・詩に用いられる表現とすること\n・語り手による口語とすること\n・\"${target}\"に翻訳すること`;
         case 'arcane':
             return `ユーザからの「原文」に対して，あなたは言語学に精通した熟練翻訳家として，以下の「制約」を遵守して適切な翻訳を行ってください．
-### 制約\r\n・大人の母語話者でも難解な表現を多用すること\r\n・日常で用いられない単語を採用すること\r\n・\"${target}\"に翻訳すること`;
+### 制約\n・大人の母語話者でも難解な表現を多用すること\n・日常で用いられない単語を採用すること\n・\"${target}\"に翻訳すること`;
         case 'old':
             return `ユーザからの「原文」に対して，あなたは言語学に精通した熟練翻訳家として，以下の「制約」を遵守して適切な翻訳を行ってください．
-### 制約\r\n・古文書や歴史書で用いられる表現とすること\r\n・現代では用いられない古語を多用すること\r\n・\"${target}\"に翻訳すること`;
+### 制約\n・古文書や歴史書で用いられる表現とすること\n・現代では用いられない古語を多用すること\n・\"${target}\"に翻訳すること`;
         default:
             return `ユーザからの「原文」に対して，あなたは教科書制作会社の熟練翻訳家として，以下の「制約」を遵守して適切な翻訳を行ってください．
-### 制約\r\n・中学生にも理解しやすいこと\r\n・中学生にも読みやすいこと\r\n・\"${target}\"に翻訳すること`;
+### 制約\n・中学生にも理解しやすいこと\n・中学生にも読みやすいこと\n・\"${target}\"に翻訳すること`;
     }
 };

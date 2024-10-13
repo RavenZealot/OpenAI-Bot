@@ -97,6 +97,8 @@ module.exports = {
         if (channelId.includes(interaction.channelId)) {
             // `chat` コマンドが呼び出された場合 OpenAI に質問を送信
             try {
+                // コマンドを実行したユーザの ID を取得
+                const userId = interaction.user.id;
                 // 質問を取得
                 const request = interaction.options.getString('質問');
                 // 選択されたプロンプト方式から質問文を生成
@@ -116,10 +118,10 @@ module.exports = {
                             const arrayBuffer = await response.arrayBuffer();
                             attachmentContent = Buffer.from(arrayBuffer).toString();
                         } catch (error) {
-                            await logger.errorToFile(`添付ファイルの取得中にエラーが発生`, error);
+                            await logger.errorToFile('添付ファイルの取得中にエラーが発生', error);
                         }
                     }
-                    await logger.logToFileForAttachment(`${attachmentContent.trim()}`);
+                    await logger.logToFileForAttachment(attachmentContent.trim());
                 }
 
                 // 会話利用設定を取得
@@ -134,10 +136,10 @@ module.exports = {
                 let previousQA = '';
                 if (usePrevious) {
                     try {
-                        previousQA = await logger.answerFromFile(interaction.user.id);
+                        previousQA = await logger.answerFromFile(userId);
                         await logger.logToFile(`前回 : ${previousQA.trim()}`);
                     } catch (error) {
-                        await logger.errorToFile(`直前の会話の取得でエラーが発生`, error);
+                        await logger.errorToFile('直前の会話の取得でエラーが発生', error);
                     }
                 }
 
@@ -146,14 +148,14 @@ module.exports = {
                     let usage = [];
                     try {
                         const messages = [
-                            { role: 'system', content: `${prompt}` },
+                            { role: 'system', content: prompt },
                         ];
                         if (usePrevious && previousQA) {
-                            messages.push({ role: 'assistant', content: `${previousQA}` });
+                            messages.push({ role: 'assistant', content: previousQA });
                         }
-                        messages.push({ role: 'user', content: `${request}` });
+                        messages.push({ role: 'user', content: request });
                         if (attachmentContent) {
-                            messages.push({ role: 'user', content: `${attachmentContent}` });
+                            messages.push({ role: 'user', content: attachmentContent });
                         }
 
                         const completion = await OPENAI.chat.completions.create({
@@ -169,32 +171,32 @@ module.exports = {
                         const splitMessages = splitAnswer(answer.message.content);
                         // 単一メッセージの場合
                         if (splitMessages.length === 1) {
-                            await interaction.editReply({ content: `${messenger.answerMessages(openAiEmoji, splitMessages[0])}\r\n`, ephemeral: !isPublic });
+                            await interaction.editReply({ content: messenger.answerMessages(openAiEmoji, splitMessages[0]), ephemeral: !isPublic });
                         }
                         // 複数メッセージの場合
                         else {
                             for (let i = 0; i < splitMessages.length; i++) {
                                 const message = splitMessages[i];
                                 if (i === 0) {
-                                    await interaction.editReply({ content: `${messenger.answerFollowMessages(openAiEmoji, message, i + 1, splitMessages.length)}\r\n`, ephemeral: !isPublic });
+                                    await interaction.editReply({ content: messenger.answerFollowMessages(openAiEmoji, message, i + 1, splitMessages.length), ephemeral: !isPublic });
                                 } else {
-                                    await interaction.followUp({ content: `${messenger.answerFollowMessages(openAiEmoji, message, i + 1, splitMessages.length)}\r\n`, ephemeral: !isPublic });
+                                    await interaction.followUp({ content: messenger.answerFollowMessages(openAiEmoji, message, i + 1, splitMessages.length), ephemeral: !isPublic });
                                 }
                             }
                         }
 
                         // 質問と回答をファイルに書き込む
-                        await logger.answerToFile(interaction.user.id, request.trim(), attachmentContent.trim(), answer.message.content.trim());
+                        await logger.answerToFile(userId, request.trim(), attachmentContent.trim(), answer.message.content.trim());
                     } catch (error) {
                         // Discord の文字数制限の場合
                         if (error.message.includes('Invalid Form Body')) {
-                            await logger.errorToFile(`Discord 文字数制限が発生`, error);
-                            await interaction.editReply(`${messenger.errorMessages(`Discord 文字数制限が発生しました`, error.message)}`);
+                            await logger.errorToFile('Discord 文字数制限が発生', error);
+                            await interaction.editReply(messenger.errorMessages('Discord 文字数制限が発生しました', error.message));
                         }
                         // その他のエラーの場合
                         else {
-                            await logger.errorToFile(`OpenAI API の返信でエラーが発生`, error);
-                            await interaction.editReply(`${messenger.errorMessages(`OpenAI API の返信でエラーが発生しました`, error.message)}`);
+                            await logger.errorToFile('OpenAI API の返信でエラーが発生', error);
+                            await interaction.editReply(messenger.errorMessages('OpenAI API の返信でエラーが発生しました', error.message));
                         }
                     } finally {
                         // 使用トークンをロギング
@@ -202,14 +204,14 @@ module.exports = {
                     }
                 })();
             } catch (error) {
-                await logger.errorToFile(`質問の取得でエラーが発生`, error);
-                await interaction.editReply(`${messenger.errorMessages(`質問の取得でエラーが発生しました`, error.message)}`);
+                await logger.errorToFile('質問の取得でエラーが発生', error);
+                await interaction.editReply(messenger.errorMessages('質問の取得でエラーが発生しました', error.message));
             }
         }
         // インタラクションが特定のチャンネルでなければ何もしない
         else {
             await interaction.reply({
-                content: `${messenger.usageMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`)}`,
+                content: messenger.usageMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`),
                 ephemeral: true
             });
             return;
