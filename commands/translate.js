@@ -96,11 +96,11 @@ module.exports = {
                             model: 'gpt-4o-mini',
                             messages: messages
                         });
-                        const answer = completion.choices[0];
-                        await logger.logToFile(`翻訳文 : ${answer.message.content.trim()}`); // 翻訳文をコンソールに出力
                         // 使用トークン情報を取得
                         usage = completion.usage;
 
+                        const answer = completion.choices[0];
+                        await logger.logToFile(`翻訳文 : ${answer.message.content.trim()}`); // 翻訳文をコンソールに出力
                         await interaction.editReply(messenger.answerMessages(openAiEmoji, answer.message.content, target));
                     } catch (error) {
                         // Discord の文字数制限の場合

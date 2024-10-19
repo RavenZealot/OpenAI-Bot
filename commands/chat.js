@@ -162,10 +162,11 @@ module.exports = {
                             model: 'gpt-4o',
                             messages: messages
                         });
-                        const answer = completion.choices[0];
-                        await logger.logToFile(`回答 : ${answer.message.content.trim()}`); // 回答をコンソールに出力
                         // 使用トークン情報を取得
                         usage = completion.usage;
+
+                        const answer = completion.choices[0];
+                        await logger.logToFile(`回答 : ${answer.message.content.trim()}`); // 回答をコンソールに出力
 
                         // 回答を分割
                         const splitMessages = splitAnswer(answer.message.content);
