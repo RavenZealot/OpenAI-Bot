@@ -9,8 +9,8 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "discord.js": "^14.16.0",
+        "discord.js": "^14.17.0",
         "dotenv": "^16.4.0",
-        "openai": "^4.67.0"
+        "openai": "^4.80.0"
     }
 }
