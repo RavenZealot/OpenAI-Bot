@@ -1,4 +1,4 @@
-const { EmbedBuilder: EMBED } = require('discord.js');
+const { EmbedBuilder: EMBED, MessageFlags } = require('discord.js');
 
 const logger = require('../utils/logger');
 const messenger = require('../utils/messenger');
@@ -21,18 +21,9 @@ module.exports = {
                 type: 3,
                 required: true,
                 choices: [
-                    {
-                        name: '1024x1024',
-                        value: '1024x1024'
-                    },
-                    {
-                        name: '1792x1024',
-                        value: '1792x1024'
-                    },
-                    {
-                        name: '1024x1792',
-                        value: '1024x1792',
-                    }
+                    { name: '1024x1024', value: '1024x1024' },
+                    { name: '1792x1024', value: '1792x1024' },
+                    { name: '1024x1792', value: '1024x1792', }
                 ]
             },
             {
@@ -53,14 +44,14 @@ module.exports = {
             try {
                 // 依頼を取得
                 const request = interaction.options.getString('依頼');
-                const size = interaction.options.getString('画像サイズ');
+                const size = interaction.options.getString('画像サイズ') || '1024x1024';
                 await logger.logToFile(`依頼 : ${request.trim()}（${size}）`); // 依頼をコンソールに出力
 
                 // 公開設定を取得
                 const isPublic = interaction.options.getBoolean('公開') ?? true;
 
                 // interaction の返信を遅延させる
-                await interaction.deferReply({ ephemeral: !isPublic });
+                await interaction.deferReply({ flags: isPublic ? MessageFlags.Ephemeral : 0 });
 
                 // OpenAI に依頼を送信しイラストを取得
                 (async () => {
@@ -105,7 +96,7 @@ module.exports = {
         else {
             await interaction.reply({
                 content: messenger.usageMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`),
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
             return;
         }

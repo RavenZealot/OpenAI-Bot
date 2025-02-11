@@ -1,3 +1,5 @@
+const { MessageFlags } = require('discord.js');
+
 const logger = require('../utils/logger');
 const messenger = require('../utils/messenger');
 
@@ -25,30 +27,12 @@ module.exports = {
                 type: 3,
                 required: false,
                 choices: [
-                    {
-                        name: 'デフォルト',
-                        value: 'default'
-                    },
-                    {
-                        name: '簡易',
-                        value: 'easy'
-                    },
-                    {
-                        name: '小説',
-                        value: 'novel'
-                    },
-                    {
-                        name: '詩的',
-                        value: 'poem'
-                    },
-                    {
-                        name: '難解',
-                        value: 'arcane'
-                    },
-                    {
-                        name: '古風',
-                        value: 'old'
-                    }
+                    { name: 'デフォルト', value: 'default' },
+                    { name: '簡易', value: 'easy' },
+                    { name: '小説', value: 'novel' },
+                    { name: '詩的', value: 'poem' },
+                    { name: '難解', value: 'arcane' },
+                    { name: '古風', value: 'old' }
                 ]
             },
             {
@@ -72,7 +56,7 @@ module.exports = {
                 // 翻訳先言語を取得
                 const target = interaction.options.getString('翻訳先');
                 // 選択されたプロンプト方式から依頼文を生成
-                const promptParam = interaction.options.getString('プロンプト');
+                const promptParam = interaction.options.getString('プロンプト') || 'default';
                 const prompt = promptGenerator(promptParam, target);
                 await logger.logToFile(`指示 : ${prompt.trim()}`); // 指示をコンソールに出力
                 await logger.logToFile(`原文 : ${request.trim()}`); // 原文をコンソールに出力
@@ -81,7 +65,7 @@ module.exports = {
                 const isPublic = interaction.options.getBoolean('公開') ?? true;
 
                 // interaction の返信を遅延させる
-                await interaction.deferReply({ ephemeral: !isPublic });
+                await interaction.deferReply({ flags: isPublic ? MessageFlags.Ephemeral : 0 });
 
                 // OpenAI に依頼文を送信し翻訳文を取得
                 (async () => {
@@ -127,7 +111,7 @@ module.exports = {
         else {
             await interaction.reply({
                 content: messenger.usageMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`),
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
             return;
         }

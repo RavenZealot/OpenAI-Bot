@@ -61,7 +61,7 @@ DISCORD.on('interactionCreate', async (interaction) => {
     } catch (error) {
         await interaction.reply({
             content: messenger.errorMessages('コマンドを実行中にエラーが発生しました', error.message),
-            ephemeral: true
+            flags: Discord.MessageFlags.Ephemeral
         });
         await logger.errorToFile('コマンドを実行中にエラーが発生', error);
     }

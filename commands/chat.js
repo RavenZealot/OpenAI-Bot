@@ -1,3 +1,5 @@
+const { MessageFlags } = require('discord.js');
+
 const logger = require('../utils/logger');
 const messenger = require('../utils/messenger');
 
@@ -19,54 +21,18 @@ module.exports = {
                 type: 3,
                 required: false,
                 choices: [
-                    {
-                        name: 'デフォルト',
-                        value: 'default'
-                    },
-                    {
-                        name: '手順',
-                        value: 'step'
-                    },
-                    {
-                        name: '指摘',
-                        value: 'question'
-                    },
-                    {
-                        name: 'コード生成',
-                        value: 'code'
-                    },
-                    {
-                        name: 'コード修正',
-                        value: 'code_correction'
-                    },
-                    {
-                        name: 'コード解析',
-                        value: 'code_analysis'
-                    },
-                    {
-                        name: 'コードレビュー',
-                        value: 'code_review'
-                    },
-                    {
-                        name: '文書作成',
-                        value: 'document'
-                    },
-                    {
-                        name: '文書要約',
-                        value: 'document_summary'
-                    },
-                    {
-                        name: '文書添削',
-                        value: 'document_correction'
-                    },
-                    {
-                        name: '図形生成',
-                        value: 'figure'
-                    },
-                    {
-                        name: 'コミットメッセージ',
-                        value: 'commit'
-                    }
+                    { name: 'デフォルト', value: 'default' },
+                    { name: '手順', value: 'step' },
+                    { name: '指摘', value: 'question' },
+                    { name: 'コード生成', value: 'code' },
+                    { name: 'コード修正', value: 'code_correction' },
+                    { name: 'コード解析', value: 'code_analysis' },
+                    { name: 'コードレビュー', value: 'code_review' },
+                    { name: '文書作成', value: 'document' },
+                    { name: '文書要約', value: 'document_summary' },
+                    { name: '文書添削', value: 'document_correction' },
+                    { name: '図形生成', value: 'figure' },
+                    { name: 'コミットメッセージ', value: 'commit' }
                 ]
             },
             {
@@ -102,7 +68,7 @@ module.exports = {
                 // 質問を取得
                 const request = interaction.options.getString('質問');
                 // 選択されたプロンプト方式から質問文を生成
-                const promptParam = interaction.options.getString('プロンプト');
+                const promptParam = interaction.options.getString('プロンプト') || 'default';
                 const prompt = promptGenerator(promptParam);
                 await logger.logToFile(`指示 : ${prompt.trim()}`); // 指示をコンソールに出力
                 await logger.logToFile(`質問 : ${request.trim()}`); // 質問をコンソールに出力
@@ -130,7 +96,7 @@ module.exports = {
                 const isPublic = interaction.options.getBoolean('公開') ?? true;
 
                 // interaction の返信を遅延させる
-                await interaction.deferReply({ ephemeral: !isPublic });
+                await interaction.deferReply({ flags: isPublic ? 0 : MessageFlags.Ephemeral });
 
                 // 直前の会話を利用する場合
                 let previousQA = '';
@@ -147,8 +113,12 @@ module.exports = {
                 (async () => {
                     let usage = [];
                     try {
+                        // プロンプトタイプに応じたモデルの選択
+                        const codePrompts = ['code', 'code_correction', 'code_analysis', 'code_review'];
+                        const modelToUse = codePrompts.includes(promptParam) ? 'o3-mini' : 'o1';
+
                         const messages = [
-                            { role: 'system', content: prompt },
+                            { role: 'system', content: prompt }
                         ];
                         if (usePrevious && previousQA) {
                             messages.push({ role: 'assistant', content: previousQA });
@@ -158,9 +128,13 @@ module.exports = {
                             messages.push({ role: 'user', content: attachmentContent });
                         }
 
+                        // 添付ファイルの有無で推論モデルを変更
+                        const reasoningEffort = attachmentContent ? 'high' : 'medium';
+
                         const completion = await OPENAI.chat.completions.create({
-                            model: 'gpt-4o',
-                            messages: messages
+                            model: modelToUse,
+                            messages: messages,
+                            reasoning_effort: reasoningEffort
                         });
                         // 使用トークン情報を取得
                         usage = completion.usage;
@@ -172,16 +146,25 @@ module.exports = {
                         const splitMessages = splitAnswer(answer.message.content);
                         // 単一メッセージの場合
                         if (splitMessages.length === 1) {
-                            await interaction.editReply({ content: messenger.answerMessages(openAiEmoji, splitMessages[0]), ephemeral: !isPublic });
+                            await interaction.editReply({
+                                content: messenger.answerMessages(openAiEmoji, splitMessages[0]),
+                                flags: isPublic ? 0 : MessageFlags.Ephemeral
+                            });
                         }
                         // 複数メッセージの場合
                         else {
                             for (let i = 0; i < splitMessages.length; i++) {
                                 const message = splitMessages[i];
                                 if (i === 0) {
-                                    await interaction.editReply({ content: messenger.answerFollowMessages(openAiEmoji, message, i + 1, splitMessages.length), ephemeral: !isPublic });
+                                    await interaction.editReply({
+                                        content: messenger.answerFollowMessages(openAiEmoji, message, i + 1, splitMessages.length),
+                                        flags: isPublic ? 0 : MessageFlags.Ephemeral
+                                    });
                                 } else {
-                                    await interaction.followUp({ content: messenger.answerFollowMessages(openAiEmoji, message, i + 1, splitMessages.length), ephemeral: !isPublic });
+                                    await interaction.followUp({
+                                        content: messenger.answerFollowMessages(openAiEmoji, message, i + 1, splitMessages.length),
+                                        flags: isPublic ? 0 : MessageFlags.Ephemeral
+                                    });
                                 }
                             }
                         }
@@ -213,7 +196,7 @@ module.exports = {
         else {
             await interaction.reply({
                 content: messenger.usageMessages(`このチャンネルでは \`${this.data.name}\` コマンドは使えません`),
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
             return;
         }
@@ -270,7 +253,7 @@ Subject は英語で簡潔な 30 字程度の要約としてください．
 入力例 : チャットのテキストをコピーする機能を追加
 返答例 : **Added feature to copy chat text.**\n- \`:+1: update / Added feature to copy text of chats\`\n- \`:sparkles: feat / Add feature to copy chat text\`\n- \`:up: upgrade / Introduce text copy functionality in chat\``;
         default:
-            return `ユーザからの「質問」に対して，適切な回答を行ってください．`;
+            return `ユーザからの「質問」に対して，適切な回答を行ってください．回答のフォーマットは Markdown 形式で記述してください．`;
     }
 };
 
