@@ -65,7 +65,7 @@ module.exports = {
                 const isPublic = interaction.options.getBoolean('公開') ?? true;
 
                 // interaction の返信を遅延させる
-                await interaction.deferReply({ flags: isPublic ? MessageFlags.Ephemeral : 0 });
+                await interaction.deferReply({ flags: isPublic ? 0 : MessageFlags.Ephemeral });
 
                 // OpenAI に依頼文を送信し翻訳文を取得
                 (async () => {
