@@ -24,6 +24,7 @@ module.exports = {
                     { name: 'デフォルト', value: 'default' },
                     { name: '手順', value: 'step' },
                     { name: '指摘', value: 'question' },
+                    { name: '推論', value: 'reasoning' },
                     { name: 'コード生成', value: 'code' },
                     { name: 'コード修正', value: 'code_correction' },
                     { name: 'コード解析', value: 'code_analysis' },
@@ -115,7 +116,14 @@ module.exports = {
                     try {
                         // プロンプトタイプに応じたモデルの選択
                         const codePrompts = ['code', 'code_correction', 'code_analysis', 'code_review'];
-                        const modelToUse = codePrompts.includes(promptParam) ? 'o3-mini' : 'o1';
+                        let modelToUse;
+                        if (promptParam === 'reasoning') {
+                            modelToUse = 'o1'
+                        } else if (codePrompts.includes(promptParam)) {
+                            modelToUse = 'o3-mini'
+                        } else {
+                            modelToUse = 'gpt-4o'
+                        }
 
                         const messages = [
                             { role: 'system', content: prompt }
@@ -131,11 +139,18 @@ module.exports = {
                         // 添付ファイルの有無で推論モデルを変更
                         const reasoningEffort = attachmentContent ? 'high' : 'medium';
 
-                        const completion = await OPENAI.chat.completions.create({
+                        // モデルに応じてパラメータを設定
+                        let completionParams = {
                             model: modelToUse,
-                            messages: messages,
-                            reasoning_effort: reasoningEffort
-                        });
+                            messages: messages
+                        };
+                        if (modelToUse === 'o1' || modelToUse === 'o3-mini') {
+                            completionParams.reasoning_effort = reasoningEffort;
+                        }
+
+                        const completion = await OPENAI.chat.completions.create(completionParams);
+                        // 使用モデル情報を取得
+                        usedModel = completion.model;
                         // 使用トークン情報を取得
                         usage = completion.usage;
 
@@ -184,7 +199,7 @@ module.exports = {
                         }
                     } finally {
                         // 使用トークンをロギング
-                        await logger.tokenToFile(usage);
+                        await logger.tokenToFile(usedModel, usage);
                     }
                 })();
             } catch (error) {

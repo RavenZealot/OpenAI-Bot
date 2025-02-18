@@ -94,10 +94,12 @@ module.exports = {
     },
 
     // コマンド実行で使用したトークンをファイルに書き込む
-    tokenToFile: async function (usage) {
+    tokenToFile: async function (usedModel, usage) {
         const logFilePath = getLogFilePath('openai-bot.log');
 
         const tokenInfo = [
+            `---------- モデル情報 ----------`,
+            `使用モデル : ${usedModel}`,
             `--------- トークン情報 ---------`,
             `質問トークン : ${usage.prompt_tokens}`,
             `回答トークン : ${usage.completion_tokens}`,
