@@ -22,16 +22,14 @@ module.exports = {
                 required: false,
                 choices: [
                     { name: 'デフォルト', value: 'default' },
-                    { name: '手順', value: 'step' },
                     { name: '指摘', value: 'question' },
                     { name: '推論', value: 'reasoning' },
                     { name: 'コード生成', value: 'code' },
-                    { name: 'コード修正', value: 'code_correction' },
                     { name: 'コード解析', value: 'code_analysis' },
                     { name: 'コードレビュー', value: 'code_review' },
+                    { name: 'ログ解析', value: 'log_analysis' },
                     { name: '文書作成', value: 'document' },
                     { name: '文書要約', value: 'document_summary' },
-                    { name: '文書添削', value: 'document_correction' },
                     { name: '図形生成', value: 'figure' },
                     { name: 'コミットメッセージ', value: 'commit' }
                 ]
@@ -115,7 +113,7 @@ module.exports = {
                     let usage = [];
                     try {
                         // プロンプトタイプに応じたモデルの選択
-                        const codePrompts = ['code', 'code_correction', 'code_analysis', 'code_review'];
+                        const codePrompts = ['code', 'code_analysis', 'code_review', 'log_analysis'];
                         let modelToUse;
                         if (promptParam === 'reasoning') {
                             modelToUse = 'o1'
@@ -220,8 +218,6 @@ module.exports = {
 
 function promptGenerator(prompt) {
     switch (prompt) {
-        case 'step':
-            return `ユーザからの「質問」に対して，Step-By-Step でなるべく詳細に説明してください．`;
         case 'question':
             return `ユーザからの「文章」に対して，あなたは専門的知見をもった教師あるいは先輩として，「指摘事項」として質問や意見を行ってください．
 「指摘事項」は簡潔にまとめ，列挙するようにしてください．`;
@@ -229,12 +225,6 @@ function promptGenerator(prompt) {
             return `ユーザからの「要求」に対して，あなたは専門的知見をもった熟練のプログラマとして全ての機能を満たすソースコードを考案してください．
 プログラム言語についての指定は「要求」に従い，指定がなければ都度最良の言語を選択し，判断理由も合わせて回答してください．
 ソースコードに対する解説は簡潔にまとめるようにしてください．`;
-        case 'code_correction':
-            return `ユーザが提供する「ソースコード」は，何らかのミスにより想定しない動作やエラーを引き起こします．
-あなたは専門的知見をもった熟練のプログラマとしてソースコードの修正を提案してください．ただし，改行文字が脱落することがあります．
-なお，次の説明は必ず含めてください．
-・「ソースコード」が想定しない動作やエラーを引き起こす理由を，実際のエラー箇所を抽出して説明してください
-・エラー箇所に対する修正案を，ソースコードと解説を合わせて説明してください`;
         case 'code_analysis':
             return `ユーザが提供する「ソースコード」に対して，あなたは専門的知見をもった熟練のプログラマとしてソースコードの概要を説明してください．ただし，改行文字が脱落することがあります．
 なお，次の説明は必ず含めてください．
@@ -247,6 +237,8 @@ function promptGenerator(prompt) {
 ・推奨されなくなった実装の指摘，および修正案．例 : \`substr\` → \`substring\`
 ・\`if\` 条件式の簡潔化の指摘，および修正案．例 : \`if (a == 0) { ... }\` → \`if (!a) { ... }\`
 ・実装に至った経緯や選択されている言語などについては，正しいものとしてレビュー対象に含まない`;
+        case 'log_analysis':
+            return `ユーザが提供する「ログファイル」に対して，あなたは専門的知見をもった熟練のシステム担当者としてインフラストラクチャ，ミドルウェア，アプリケーションのすべての知識を使って要望に回答してください．ただし，改行文字が脱落することがあります．`;
         case 'document':
             return `ユーザからの「要求」に対して，要求を満たす文章を考案してください．
 頭語や結語は不要で，本文のみとしてください．
@@ -254,10 +246,6 @@ function promptGenerator(prompt) {
         case 'document_summary':
             return `ユーザが提供する「文章」に対して，最も重要なポイントを箇条書きに要約してください．
 それぞれの要点は簡潔にまとめることが重要ですが，文章の意味を変えるような要約や記述意義の欠損は避けてください．`;
-        case 'document_correction':
-            return `ユーザが提供する「文章」に対して，あなたは国営放送のシナリオライターとして文章を添削してください．
-誤字・脱字の指摘は該当箇所をわかりやすく示し，変更案も合わせて示してください．
-文章の意味を変えるような要約や記述意義の欠損は避けてください．`;
         case 'figure':
             return `ユーザからの「要求」に対して，適切な Mermaid ダイアグラムを作成してください．`;
         case 'commit':
@@ -268,7 +256,7 @@ Subject は英語で簡潔な 30 字程度の要約としてください．
 入力例 : チャットのテキストをコピーする機能を追加
 返答例 : **Added feature to copy chat text.**\n- \`:+1: update / Added feature to copy text of chats\`\n- \`:sparkles: feat / Add feature to copy chat text\`\n- \`:up: upgrade / Introduce text copy functionality in chat\``;
         default:
-            return `ユーザからの「質問」に対して，適切な回答を行ってください．回答のフォーマットは Markdown 形式で記述してください．`;
+            return `ユーザからの「質問」に対して，Step-By-Step でなるべく詳細に説明してください．`;
     }
 };
 
