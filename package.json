@@ -9,8 +9,10 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "axios": "^1.9.0",
         "discord.js": "^14.18.0",
-        "dotenv": "^16.4.0",
-        "openai": "^4.83.0"
+        "dotenv": "^16.5.0",
+        "openai": "^4.96.0",
+        "streamifier": "^0.1.0"
     }
 }
