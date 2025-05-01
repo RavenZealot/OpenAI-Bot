@@ -101,6 +101,9 @@ module.exports = {
                                     n: 1,
                                     size: size,
                                 });
+                                // 使用トークン情報を取得
+                                usage = completion.usage;
+
                                 const answer = completion.data[0];
                                 const created = completion.created;
                                 await logger.logToFile(`編集イラスト : ${created}`); // 編集イラストのタイムスタンプをコンソールに出力
@@ -139,6 +142,9 @@ module.exports = {
                                     await logger.errorToFile('OpenAI API のイラスト編集でエラーが発生', error);
                                     await interaction.editReply(messenger.errorMessages('OpenAI API のイラスト編集でエラーが発生しました', error.message));
                                 }
+                            } finally {
+                                // 使用トークンをロギング
+                                await logger.tokenImageToFile('gpt-image-1', usage);
                             }
                         })();
                     } else {
@@ -163,6 +169,9 @@ module.exports = {
                                 n: 1,
                                 size: size
                             });
+                            // 使用トークン情報を取得
+                            usage = completion.usage;
+
                             const answer = completion.data[0];
                             const created = completion.created;
                             await logger.logToFile(`生成イラスト : ${created}`); // 生成イラストのタイムスタンプをコンソールに出力
@@ -201,6 +210,9 @@ module.exports = {
                                 await logger.errorToFile('OpenAI API のイラスト生成でエラーが発生', error);
                                 await interaction.editReply(messenger.errorMessages('OpenAI API のイラスト生成でエラーが発生しました', error.message));
                             }
+                        } finally {
+                            // 使用トークンをロギング
+                            await logger.tokenImageToFile('gpt-image-1', usage);
                         }
                     })();
                 }

@@ -110,6 +110,23 @@ module.exports = {
         await FS.appendFile(logFilePath, `${tokenInfo}\n`);
     },
 
+    // コマンド実行で使用したトークンをファイルに書き込む
+    tokenImageToFile: async function (usedModel, usage) {
+        const logFilePath = getLogFilePath('openai-bot.log');
+
+        const tokenInfo = [
+            `---------- モデル情報 ----------`,
+            `使用モデル : ${usedModel}`,
+            `--------- トークン情報 ---------`,
+            `入力トークン : ${usage.input_tokens}`,
+            `出力トークン : ${usage.output_tokens}`,
+            `総計トークン : ${usage.total_tokens}`,
+            `--------------------------------`
+        ].join('\n');
+
+        await FS.appendFile(logFilePath, `${tokenInfo}\n`);
+    },
+
     // ログファイルのバックアップと新規作成
     logRotate: async function () {
         const logFilePath = getLogFilePath('openai-bot.log');
