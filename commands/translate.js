@@ -77,9 +77,11 @@ module.exports = {
                         ];
 
                         const completion = await OPENAI.chat.completions.create({
-                            model: 'gpt-4o-mini',
+                            model: 'gpt-5-mini',
                             messages: messages
                         });
+                        // 使用モデル情報を取得
+                        usedModel = completion.model;
                         // 使用トークン情報を取得
                         usage = completion.usage;
 
@@ -99,7 +101,7 @@ module.exports = {
                         }
                     } finally {
                         // 使用トークンをロギング
-                        await logger.tokenToFile(usage);
+                        await logger.tokenToFile(usedModel, usage);
                     }
                 })();
             } catch (error) {
