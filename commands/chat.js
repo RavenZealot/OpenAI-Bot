@@ -116,11 +116,11 @@ module.exports = {
                         const codePrompts = ['code', 'code_analysis', 'code_review', 'log_analysis'];
                         let modelToUse;
                         if (promptParam === 'reasoning') {
-                            modelToUse = 'o1'
+                            modelToUse = 'o4-mini'
                         } else if (codePrompts.includes(promptParam)) {
-                            modelToUse = 'o3-mini'
+                            modelToUse = 'o3'
                         } else {
-                            modelToUse = 'gpt-4o'
+                            modelToUse = 'gpt-5'
                         }
 
                         const messages = [
@@ -142,7 +142,7 @@ module.exports = {
                             model: modelToUse,
                             messages: messages
                         };
-                        if (modelToUse === 'o1' || modelToUse === 'o3-mini') {
+                        if (modelToUse === 'o4-mini' || modelToUse === 'o3') {
                             completionParams.reasoning_effort = reasoningEffort;
                             messages.push({ role: 'user', content: 'コードはMarkdown形式でなければ正しく表示されません' });
                         }
