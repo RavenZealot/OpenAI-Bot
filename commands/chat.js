@@ -144,8 +144,8 @@ module.exports = {
                         };
                         if (modelToUse === 'o4-mini' || modelToUse === 'o3') {
                             completionParams.reasoning_effort = reasoningEffort;
-                            messages.push({ role: 'user', content: 'コードはMarkdown形式でなければ正しく表示されません' });
                         }
+                        messages.push({ role: 'user', content: '【注意】回答はMarkdown形式でなければ正しく表示されません' });
 
                         const completion = await OPENAI.chat.completions.create(completionParams);
                         // 使用モデル情報を取得
