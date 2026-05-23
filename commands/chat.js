@@ -116,11 +116,11 @@ module.exports = {
                         const codePrompts = ['code', 'code_analysis', 'code_review', 'log_analysis'];
                         let modelToUse;
                         if (promptParam === 'reasoning') {
-                            modelToUse = 'o4-mini'
+                            modelToUse = 'gpt-5.5-pro'
                         } else if (codePrompts.includes(promptParam)) {
-                            modelToUse = 'o3'
+                            modelToUse = 'gpt-5.5'
                         } else {
-                            modelToUse = 'gpt-5'
+                            modelToUse = 'gpt-5.4-mini'
                         }
 
                         const messages = [
@@ -140,20 +140,20 @@ module.exports = {
                         // モデルに応じてパラメータを設定
                         let completionParams = {
                             model: modelToUse,
-                            messages: messages
+                            input: messages
                         };
-                        if (modelToUse === 'o4-mini' || modelToUse === 'o3') {
-                            completionParams.reasoning_effort = reasoningEffort;
+                        if (promptParam === 'reasoning' || codePrompts.includes(promptParam)) {
+                            completionParams.reasoning = { effort: reasoningEffort };
                         }
                         messages.push({ role: 'user', content: '【注意】回答はMarkdown形式でなければ正しく表示されません' });
 
-                        const completion = await OPENAI.chat.completions.create(completionParams);
+                        const completion = await OPENAI.responses.create(completionParams);
                         // 使用モデル情報を取得
                         usedModel = completion.model;
                         // 使用トークン情報を取得
                         usage = completion.usage;
 
-                        const answer = completion.choices[0];
+                        const answer = { message: { content: completion.output_text } };
                         await logger.logToFile(`回答 : ${answer.message.content.trim()}`); // 回答をコンソールに出力
 
                         // 回答を分割

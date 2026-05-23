@@ -4,19 +4,19 @@ AI chat bot for Discord using OpenAI API
 
 ## Reference
 
-- [API Reference - OpenAI API](https://platform.openai.com/docs/api-reference/introduction)
-- [Overview - OpenAI API](https://platform.openai.com/docs/overview)
+- [API Overview | OpenAI API Reference](https://developers.openai.com/api/reference/overview#introduction)
+  - [All models | OpenAI API](https://developers.openai.com/api/docs/models/all)
 
 ## Required (Only once)
 
 - `.env` (Root directory)
   - OPENAI_ORG_ID : OpenAI [Organization ID](https://platform.openai.com/settings/organization/general)
-  - OPENAI_API_KEY : OpenAI [API keys](https://platform.openai.com/organization/api-keys)
-  - OPENAI_PROJECT_ID : OpenAI [Project ID](https://platform.openai.com/organization/projects)
+  - OPENAI_API_KEY : OpenAI [API keys](https://platform.openai.com/settings/organization/api-keys)
+  - OPENAI_PROJECT_ID : OpenAI [Project ID](https://platform.openai.com/settings/organization/projects)
   - BOT_TOKEN : Discord Application [Token](https://discord.com/developers/applications)
-  - CHAT_CHANNEL_ID : for [Text generation](https://platform.openai.com/docs/guides/text-generation)
+  - CHAT_CHANNEL_ID : for [Text generation](https://developers.openai.com/api/docs/guides/text)
     Multiple designations possible
-  - IMAGE_CHANNEL_ID : for [Image generation](https://platform.openai.com/docs/guides/images)
+  - IMAGE_CHANNEL_ID : for [Image generation](https://developers.openai.com/api/docs/guides/images-vision)
     Multiple designations possible
   - OPENAI_EMOJI : Emoji for OpenAI API (e.g. `<:OpenAI:1234567890123456789>`)
 - Discord Application Generated URL

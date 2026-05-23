@@ -70,22 +70,23 @@ module.exports = {
                 // OpenAI に依頼文を送信し翻訳文を取得
                 (async () => {
                     let usage = [];
+                    let modelToUse = 'gpt-5-mini';
                     try {
                         const messages = [
                             { role: 'system', content: prompt },
                             { role: 'user', content: request }
                         ];
 
-                        const completion = await OPENAI.chat.completions.create({
-                            model: 'gpt-5-mini',
-                            messages: messages
+                        const completion = await OPENAI.responses.create({
+                            model: modelToUse,
+                            input: messages
                         });
                         // 使用モデル情報を取得
                         usedModel = completion.model;
                         // 使用トークン情報を取得
                         usage = completion.usage;
 
-                        const answer = completion.choices[0];
+                        const answer = { message: { content: completion.output_text } };
                         await logger.logToFile(`翻訳文 : ${answer.message.content.trim()}`); // 翻訳文をコンソールに出力
                         await interaction.editReply(messenger.answerMessages(openAiEmoji, answer.message.content, target));
                     } catch (error) {
