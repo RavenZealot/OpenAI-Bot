@@ -73,6 +73,7 @@ module.exports = {
                 await logger.logToFile(`質問 : ${request.trim()}`); // 質問をコンソールに出力
 
                 // 添付ファイルがある場合は内容を取得
+                let rawAttachment = '';
                 let attachmentContent = '';
                 if (interaction.options.get('添付ファイル')) {
                     const attachment = interaction.options.getAttachment('添付ファイル');
@@ -81,12 +82,16 @@ module.exports = {
                         try {
                             const response = await fetch(attachment.url);
                             const arrayBuffer = await response.arrayBuffer();
-                            attachmentContent = Buffer.from(arrayBuffer).toString();
+                            rawAttachment = Buffer.from(arrayBuffer).toString();
+                            attachmentContent = rawAttachment
+                                .replace(/\r\n/g, '\n')
+                                .replace(/\n{3,}/g, '\n\n')
+                                .replace(/[ \t]+$/gm, '');
                         } catch (error) {
                             await logger.errorToFile('添付ファイルの取得中にエラーが発生', error);
                         }
                     }
-                    await logger.logToFileForAttachment(attachmentContent.trim());
+                    await logger.logToFileForAttachment(rawAttachment.trim());
                 }
 
                 // 会話利用設定を取得
@@ -110,6 +115,7 @@ module.exports = {
 
                 // OpenAI に質問を送信し回答を取得
                 (async () => {
+                    let usedModel = 'unknown';
                     let usage = [];
                     try {
                         // プロンプトタイプに応じたモデルの選択
@@ -127,12 +133,23 @@ module.exports = {
                             { role: 'system', content: prompt }
                         ];
                         if (usePrevious && previousQA) {
-                            messages.push({ role: 'assistant', content: previousQA });
+                            messages.push({
+                                role: 'assistant',
+                                content: `<previous_answer>\n${previousQA}\n</previous_answer>`
+                            });
                         }
-                        messages.push({ role: 'user', content: request });
+                        const userContent = [];
                         if (attachmentContent) {
-                            messages.push({ role: 'user', content: attachmentContent });
+                            userContent.push({
+                                type: 'input_text',
+                                text: `<attachment>\n${attachmentContent}\n</attachment>`
+                            });
                         }
+                        userContent.push({
+                            type: 'input_text',
+                            text: request,
+                        });
+                        messages.push({ role: 'user', content: userContent });
 
                         // 添付ファイルの有無で推論モデルを変更
                         const reasoningEffort = attachmentContent ? 'high' : 'medium';
@@ -184,7 +201,7 @@ module.exports = {
                         }
 
                         // 質問と回答をファイルに書き込む
-                        await logger.answerToFile(userId, request.trim(), attachmentContent.trim(), answer.message.content.trim());
+                        await logger.answerToFile(userId, request.trim(), rawAttachment.trim(), answer.message.content.trim());
                     } catch (error) {
                         // Discord の文字数制限の場合
                         if (error.message.includes('Invalid Form Body')) {
