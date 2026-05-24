@@ -2,6 +2,28 @@ const FS = require('fs').promises;
 const PATH = require('path');
 
 module.exports = {
+    // 会話状態をファイルに書き込む
+    saveConversationState: async function (userid, responseId) {
+        const stateFilePath = getStateFilePath(userid);
+        const state = {
+            response_id: responseId,
+            updated_at: new Date().toISOString()
+        };
+        await FS.writeFile(stateFilePath, JSON.stringify(state, null, 2));
+    },
+
+    // 会話状態を読み込む
+    loadConversationState: async function (userid) {
+        const stateFilePath = getStateFilePath(userid);
+        try {
+            const data = await FS.readFile(stateFilePath, 'utf-8');
+            return JSON.parse(data);
+        } catch (error) {
+            if (error.code === 'ENOENT') return null;
+            throw error;
+        }
+    },
+
     // ログをファイルに書き込む
     logToFile: async function (message) {
         const now = new Date();
@@ -20,7 +42,7 @@ module.exports = {
 
         const logMessage = [
             `========= 添付ファイル =========`,
-            `内容 : ${attachment}`,
+            `${attachment}`,
             `================================`
         ].join('\n');
 
@@ -39,43 +61,6 @@ module.exports = {
 
         await FS.appendFile(logFilePath, `${logMessage}\n`);
         console.error(errorMessage);
-    },
-
-    // 直前の会話をファイルに書き込む
-    answerToFile: async function (userid, request, attachment, answer) {
-        const logFilePath = getLogFilePath(`openai-bot-${userid}.log`);
-
-        const previousQA = [
-            `---------- 直前の会話 ----------`,
-            `質問 : ${request}`
-        ];
-        if (attachment) {
-            previousQA.push(
-                `========= 添付ファイル =========`,
-                `内容 : ${attachment}`,
-                `================================`
-            );
-        }
-        previousQA.push(
-            `回答 : ${answer}`,
-            `--------------------------------`
-        );
-
-        await FS.writeFile(logFilePath, `\n${previousQA.join('\n')}\n`);
-    },
-
-    // 直前の会話をファイルから読み込む
-    answerFromFile: async function (userid) {
-        const logFilePath = getLogFilePath(`openai-bot-${userid}.log`);
-
-        let previousQA = '';
-        try {
-            previousQA = await FS.readFile(logFilePath, 'utf-8');
-        } catch (error) {
-            if (error.code !== 'ENOENT') throw error;
-        }
-
-        return previousQA;
     },
 
     // コマンドを起動したユーザ情報をファイルにのみ書き込む
@@ -137,4 +122,8 @@ module.exports = {
 
 function getLogFilePath(fileName) {
     return PATH.resolve(__dirname, `../${fileName}`);
+};
+
+function getStateFilePath(userid) {
+    return PATH.resolve(__dirname, `../openai-bot-${userid}.json`);
 };

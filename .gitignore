@@ -1,3 +1,4 @@
 node_modules/
 /.env
 /openai-bot*.log
+/openai-bot*.json

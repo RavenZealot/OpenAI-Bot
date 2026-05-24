@@ -103,13 +103,16 @@ module.exports = {
                 await interaction.deferReply({ flags: isPublic ? 0 : MessageFlags.Ephemeral });
 
                 // 直前の会話を利用する場合
-                let previousQA = '';
+                let previousResponseId = null;
                 if (usePrevious) {
                     try {
-                        previousQA = await logger.answerFromFile(userId);
-                        await logger.logToFile(`前回 : ${previousQA.trim()}`);
+                        const state = await logger.loadConversationState(userId);
+                        if (state && state.response_id) {
+                            previousResponseId = state.response_id;
+                            await logger.logToFile(`会話状態 : ${previousResponseId}`);
+                        }
                     } catch (error) {
-                        await logger.errorToFile('直前の会話の取得でエラーが発生', error);
+                        await logger.errorToFile('会話状態の取得でエラーが発生', error);
                     }
                 }
 
@@ -129,15 +132,7 @@ module.exports = {
                             modelToUse = 'gpt-5.4-mini'
                         }
 
-                        const messages = [
-                            { role: 'system', content: prompt }
-                        ];
-                        if (usePrevious && previousQA) {
-                            messages.push({
-                                role: 'assistant',
-                                content: `<previous_answer>\n${previousQA}\n</previous_answer>`
-                            });
-                        }
+                        const messages = [{ role: 'system', content: prompt }];
                         const userContent = [];
                         if (attachmentContent) {
                             userContent.push({
@@ -163,6 +158,10 @@ module.exports = {
                             completionParams.reasoning = { effort: reasoningEffort };
                         }
                         messages.push({ role: 'user', content: '【注意】回答はMarkdown形式でなければ正しく表示されません' });
+                        // 直前の会話をサーバから取得
+                        if (previousResponseId) {
+                            completionParams.previous_response_id = previousResponseId;
+                        }
 
                         const completion = await OPENAI.responses.create(completionParams);
                         // 使用モデル情報を取得
@@ -172,6 +171,9 @@ module.exports = {
 
                         const answer = { message: { content: completion.output_text } };
                         await logger.logToFile(`回答 : ${answer.message.content.trim()}`); // 回答をコンソールに出力
+
+                        // 会話状態を保存
+                        await logger.saveConversationState(userId, completion.id);
 
                         // 回答を分割
                         const splitMessages = splitAnswer(answer.message.content);
@@ -199,9 +201,6 @@ module.exports = {
                                 }
                             }
                         }
-
-                        // 質問と回答をファイルに書き込む
-                        await logger.answerToFile(userId, request.trim(), rawAttachment.trim(), answer.message.content.trim());
                     } catch (error) {
                         // Discord の文字数制限の場合
                         if (error.message.includes('Invalid Form Body')) {
