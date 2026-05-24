@@ -55,10 +55,10 @@ module.exports = {
                 // 依頼を取得
                 const request = interaction.options.getString('依頼');
                 const size = interaction.options.getString('画像サイズ') || '1024x1024';
-                await logger.logToFile(`依頼 : ${request.trim()}（${size}）`); // 依頼をコンソールに出力
-
                 // 公開設定を取得
                 const isPublic = interaction.options.getBoolean('公開') ?? true;
+
+                await logger.logToFile(`依頼 : ${request.trim()}（${size}）`); // 依頼をコンソールに出力
 
                 // interaction の返信を遅延させる
                 await interaction.deferReply({ flags: isPublic ? 0 : MessageFlags.Ephemeral });
