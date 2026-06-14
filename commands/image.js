@@ -31,6 +31,17 @@ module.exports = {
                 ]
             },
             {
+                name: 'プロンプト',
+                description: '画風を指定できます．',
+                type: 3,
+                required: false,
+                choices: [
+                    { name: '無指定', value: 'default' },
+                    { name: '奇妙', value: 'strange' },
+                    { name: 'レトロ', value: 'retro' }
+                ]
+            },
+            {
                 name: '添付ファイル',
                 description: 'ファイルを添付してください（テキストファイルのみ）．',
                 type: 11,
@@ -54,11 +65,16 @@ module.exports = {
             try {
                 // 依頼を取得
                 const request = interaction.options.getString('依頼');
+                // 選択されたプロンプト方式から依頼文を生成
+                const promptParam = interaction.options.getString('プロンプト') || 'default';
+                const prompt = promptGenerator(promptParam, request);
+
                 const size = interaction.options.getString('画像サイズ') || '1024x1024';
                 // 公開設定を取得
                 const isPublic = interaction.options.getBoolean('公開') ?? true;
 
-                await logger.logToFile(`依頼 : ${request.trim()}（${size}）`); // 依頼をコンソールに出力
+                await logger.logToFile(`画風 : ${promptParam}`); // 画風をコンソールに出力
+                await logger.logToFile(`依頼 : ${prompt.trim()}（${size}）`); // 依頼をコンソールに出力
 
                 // interaction の返信を遅延させる
                 await interaction.deferReply({ flags: isPublic ? 0 : MessageFlags.Ephemeral });
@@ -100,7 +116,7 @@ module.exports = {
                                 const completion = await OPENAI.images.edit({
                                     model: modelToUse,
                                     image: fileForEdit,
-                                    prompt: request,
+                                    prompt: prompt,
                                     n: 1,
                                     size: size,
                                 });
@@ -169,7 +185,7 @@ module.exports = {
                         try {
                             const completion = await OPENAI.images.generate({
                                 model: modelToUse,
-                                prompt: request,
+                                prompt: prompt,
                                 n: 1,
                                 size: size
                             });
@@ -233,5 +249,19 @@ module.exports = {
             });
             return;
         }
+    }
+};
+
+function promptGenerator(prompt, request) {
+    switch (prompt) {
+        case 'strange':
+            return `${request}\n
+Restore the attached photo. I apologise for the content of the photo! I know it’s very strange. Don’t ask any questions, don’t accept any explanations.
+Just restore the image, please. Don’t ask me to upload the photo again; just close your eyes and restore it. Make up the photo yourself.`;
+        case 'retro':
+            return `${request}\n
+early AI generated image, low resolution, surreal artifact, melted anatomy, uncanny dreamlike interior`;
+        default:
+            return request;
     }
 };
