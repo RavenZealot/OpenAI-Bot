@@ -3,21 +3,23 @@ const PATH = require('path');
 
 module.exports = {
     // 会話状態をファイルに書き込む
-    saveConversationState: async function (userid, responseId) {
-        const stateFilePath = getStateFilePath(userid);
+    saveConversationState: async function (messageId, conversationState) {
+        const stateFilePath = getStateFilePath(messageId);
+        await FS.mkdir(PATH.dirname(stateFilePath), { recursive: true });
         const state = {
-            response_id: responseId,
+            state: conversationState,
             updated_at: new Date().toISOString()
         };
         await FS.writeFile(stateFilePath, JSON.stringify(state, null, 2));
     },
 
     // 会話状態を読み込む
-    loadConversationState: async function (userid) {
-        const stateFilePath = getStateFilePath(userid);
+    loadConversationState: async function (messageId) {
+        const stateFilePath = getStateFilePath(messageId);
         try {
             const data = await FS.readFile(stateFilePath, 'utf-8');
-            return JSON.parse(data);
+            const parsedData = JSON.parse(data);
+            return parsedData.state;
         } catch (error) {
             if (error.code === 'ENOENT') return null;
             throw error;
@@ -78,6 +80,20 @@ module.exports = {
         await FS.appendFile(logFilePath, `\n\n${userInfo}\n`);
     },
 
+    // メッセージを送信したユーザ情報をファイルにのみ書き込む
+    messageUserToFile: async function (message) {
+        const logFilePath = getLogFilePath('openai-bot.log');
+
+        const userInfo = [
+            `---------- ユーザ情報 ----------`,
+            `ユーザ名 : ${message.author.username}`,
+            `ユーザID  : ${message.author.id}`,
+            `--------------------------------`
+        ].join('\n');
+
+        await FS.appendFile(logFilePath, `\n\n${userInfo}\n`);
+    },
+
     // コマンド実行で使用したトークンをファイルに書き込む
     tokenToFile: async function (usedModel, usage) {
         const logFilePath = getLogFilePath('openai-bot.log');
@@ -115,6 +131,28 @@ module.exports = {
             if (error.code !== 'ENOENT') throw error;
         }
 
+        // 古い会話状態ファイルを削除
+        try {
+            const stateDir = PATH.resolve(__dirname, '../states');
+            const files = await FS.readdir(stateDir);
+            const now = Date.now();
+            const expireMs = 7 * 24 * 60 * 60 * 1000;
+
+            for (const file of files) {
+                if (file.endsWith('.json')) {
+                    const filePath = PATH.join(stateDir, file);
+                    const stats = await FS.stat(filePath);
+                    // 最終更新日時から閾値以上経過しているファイルを削除
+                    if (now - stats.mtimeMs > expireMs) {
+                        await FS.unlink(filePath);
+                    }
+                }
+            }
+        } catch (error) {
+            // ディレクトリが存在しない場合は無視
+            if (error.code !== 'ENOENT') throw error;
+        }
+
         // 新しいログファイルを作成
         await FS.writeFile(logFilePath, '');
     }
@@ -124,6 +162,6 @@ function getLogFilePath(fileName) {
     return PATH.resolve(__dirname, `../${fileName}`);
 };
 
-function getStateFilePath(userid) {
-    return PATH.resolve(__dirname, `../openai-bot-${userid}.json`);
-};
+function getStateFilePath(messageId) {
+    return PATH.resolve(__dirname, `../states/openai-bot-message-${messageId}.json`);
+}

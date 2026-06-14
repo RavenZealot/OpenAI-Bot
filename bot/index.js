@@ -7,6 +7,8 @@ const OpenAI = require('openai');
 const FS = require('fs').promises;
 const PATH = require('path');
 
+const messageCreateHandler = require('../handlers/messageCreate');
+
 const logger = require('../utils/logger');
 const messenger = require('../utils/messenger');
 
@@ -20,7 +22,13 @@ const messenger = require('../utils/messenger');
 })();
 
 // Discord クライアントを作成
-const DISCORD = new Discord.Client({ intents: [Discord.GatewayIntentBits.Guilds] });
+const DISCORD = new Discord.Client({
+    intents: [
+        Discord.GatewayIntentBits.Guilds,
+        Discord.GatewayIntentBits.GuildMessages,
+        Discord.GatewayIntentBits.MessageContent
+    ]
+});
 
 // OpenAI API クライアントを作成
 const configuration = new OpenAI({
@@ -67,16 +75,22 @@ DISCORD.on('interactionCreate', async (interaction) => {
     }
 });
 
+// メッセージが作成されたときの処理
+DISCORD.on('messageCreate', async (message) => {
+    await messageCreateHandler.execute(message, commands, OPENAI);
+});
+
 // Bot でログイン
 DISCORD.login(process.env.BOT_TOKEN);
 
 // `../commands` ディレクトリ内のコマンドを読み込む
 async function loadCommands() {
-    const commandFiles = await FS.readdir(PATH.resolve(__dirname, '../commands'));
+    const commandDir = PATH.resolve(__dirname, '../commands');
+    const commandFiles = await FS.readdir(commandDir);
     const jsFiles = commandFiles.filter((file) => file.endsWith('.js'));
 
     for (const file of jsFiles) {
-        const command = require(PATH.resolve(__dirname, `../commands/${file}`));
+        const command = require(PATH.resolve(commandDir, file));
         commands[command.data.name] = command;
         await logger.logToFile(`コマンド \`${command.data.name}\` を読み込みました`);
     }
