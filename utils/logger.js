@@ -87,7 +87,7 @@ module.exports = {
         const userInfo = [
             `---------- ユーザ情報 ----------`,
             `ユーザ名 : ${message.author.username}`,
-            `ユーザID  : ${message.author.id}`,
+            `ユーザID : ${message.author.id}`,
             `--------------------------------`
         ].join('\n');
 

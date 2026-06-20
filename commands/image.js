@@ -46,12 +46,6 @@ module.exports = {
                 description: 'ファイルを添付してください（テキストファイルのみ）．',
                 type: 11,
                 required: false
-            },
-            {
-                name: '公開',
-                description: '他のユーザに公開するかを選択してください．',
-                type: 5,
-                required: false
             }
         ]
     },
@@ -70,14 +64,12 @@ module.exports = {
                 const prompt = promptGenerator(promptParam, request);
 
                 const size = interaction.options.getString('画像サイズ') || '1024x1024';
-                // 公開設定を取得
-                const isPublic = interaction.options.getBoolean('公開') ?? true;
 
                 await logger.logToFile(`画風 : ${promptParam}`); // 画風をコンソールに出力
                 await logger.logToFile(`依頼 : ${prompt.trim()}（${size}）`); // 依頼をコンソールに出力
 
                 // interaction の返信を遅延させる
-                await interaction.deferReply({ flags: isPublic ? 0 : MessageFlags.Ephemeral });
+                await interaction.deferReply();
 
                 let modelToUse = 'gpt-image-2';
 

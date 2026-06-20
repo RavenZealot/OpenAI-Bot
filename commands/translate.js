@@ -34,12 +34,6 @@ module.exports = {
                     { name: '難解', value: 'arcane' },
                     { name: '古風', value: 'old' }
                 ]
-            },
-            {
-                name: '公開',
-                description: '他のユーザに公開するかを選択してください．',
-                type: 5,
-                required: false
             }
         ]
     },
@@ -58,14 +52,12 @@ module.exports = {
                 // 選択されたプロンプト方式から依頼文を生成
                 const promptParam = interaction.options.getString('プロンプト') || 'default';
                 const prompt = promptGenerator(promptParam, target);
-                // 公開設定を取得
-                const isPublic = interaction.options.getBoolean('公開') ?? true;
 
                 await logger.logToFile(`指示 : ${prompt.trim()}`); // 指示をコンソールに出力
                 await logger.logToFile(`原文 : ${request.trim()}`); // 原文をコンソールに出力
 
                 // interaction の返信を遅延させる
-                await interaction.deferReply({ flags: isPublic ? 0 : MessageFlags.Ephemeral });
+                await interaction.deferReply();
 
                 // OpenAI に依頼文を送信し翻訳文を取得
                 (async () => {
