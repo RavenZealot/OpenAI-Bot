@@ -31,11 +31,10 @@ const DISCORD = new Discord.Client({
 });
 
 // OpenAI API クライアントを作成
-const configuration = new OpenAI({
+const OPENAI = new OpenAI({
     organization: process.env.OPENAI_ORG_ID,
     apiKey: process.env.OPENAI_API_KEY
 });
-const OPENAI = new OpenAI(configuration);
 
 const commands = {};
 
@@ -94,4 +93,4 @@ async function loadCommands() {
         commands[command.data.name] = command;
         await logger.logToFile(`コマンド \`${command.data.name}\` を読み込みました`);
     }
-};
+}

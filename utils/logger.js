@@ -2,9 +2,22 @@ const FS = require('fs').promises;
 const PATH = require('path');
 
 module.exports = {
-    // 会話状態をファイルに書き込む
-    saveConversationState: async function (messageId, conversationState) {
+    // 会話状態をファイルから読み込む
+    loadConversationState: async function (messageId) {
         const stateFilePath = getStateFilePath(messageId);
+        try {
+            const data = await FS.readFile(stateFilePath, 'utf-8');
+            const parsedData = JSON.parse(data);
+            return parsedData.state;
+        } catch (error) {
+            if (error.code === 'ENOENT') return null;
+            throw error;
+        }
+    },
+
+    // 会話状態をスレッド単位でファイルに書き込む
+    saveThreadConversationState: async function (threadId, conversationState) {
+        const stateFilePath = getThreadStateFilePath(threadId);
         await FS.mkdir(PATH.dirname(stateFilePath), { recursive: true });
         const state = {
             state: conversationState,
@@ -13,9 +26,9 @@ module.exports = {
         await FS.writeFile(stateFilePath, JSON.stringify(state, null, 2));
     },
 
-    // 会話状態を読み込む
-    loadConversationState: async function (messageId) {
-        const stateFilePath = getStateFilePath(messageId);
+    // 会話状態をスレッド単位でファイルから読み込む
+    loadThreadConversationState: async function (threadId) {
+        const stateFilePath = getThreadStateFilePath(threadId);
         try {
             const data = await FS.readFile(stateFilePath, 'utf-8');
             const parsedData = JSON.parse(data);
@@ -98,13 +111,17 @@ module.exports = {
     tokenToFile: async function (usedModel, usage) {
         const logFilePath = getLogFilePath('openai-bot.log');
 
+        const inputTokens = usage.input_tokens || 0;
+        const outputTokens = usage.output_tokens || 0;
+        const totalTokens = usage.total_tokens || (inputTokens + outputTokens);
+
         const tokenInfo = [
             `---------- モデル情報 ----------`,
             `使用モデル : ${usedModel}`,
             `--------- トークン情報 ---------`,
-            `質問トークン : ${usage.input_tokens}`,
-            `回答トークン : ${usage.output_tokens}`,
-            `総計トークン : ${usage.total_tokens}`,
+            `質問トークン : ${inputTokens}`,
+            `回答トークン : ${outputTokens}`,
+            `総計トークン : ${totalTokens}`,
             `--------------------------------`
         ].join('\n');
 
@@ -133,7 +150,7 @@ module.exports = {
 
         // 古い会話状態ファイルを削除
         try {
-            const stateDir = PATH.resolve(__dirname, '../states');
+            const stateDir = getStateDirPath();
             const files = await FS.readdir(stateDir);
             const now = Date.now();
             const expireMs = 7 * 24 * 60 * 60 * 1000;
@@ -160,8 +177,16 @@ module.exports = {
 
 function getLogFilePath(fileName) {
     return PATH.resolve(__dirname, `../${fileName}`);
-};
+}
+
+function getStateDirPath() {
+    return PATH.resolve(__dirname, '../states');
+}
 
 function getStateFilePath(messageId) {
-    return PATH.resolve(__dirname, `../states/openai-bot-message-${messageId}.json`);
+    return PATH.resolve(getStateDirPath(), `openai-bot-message-${messageId}.json`);
+}
+
+function getThreadStateFilePath(threadId) {
+    return PATH.resolve(getStateDirPath(), `openai-bot-thread-${threadId}.json`);
 }

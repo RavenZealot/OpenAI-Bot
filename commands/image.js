@@ -256,4 +256,4 @@ early AI generated image, low resolution, surreal artifact, melted anatomy, unca
         default:
             return request;
     }
-};
+}
