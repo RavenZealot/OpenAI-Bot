@@ -16,7 +16,7 @@ module.exports = {
                 // Bot メッセージへの返信かチェック
                 if (repliedMessage.author.id === message.client.user.id) {
                     const command = commands['chat'];
-                    if (command && command.handleReply) {
+                    if (command?.handleReply) {
                         await command.handleReply(message, OPENAI);
                     }
                     return;
@@ -29,7 +29,7 @@ module.exports = {
         // スレッド内のメッセージは会話の継続とみなす
         if (message.channel.isThread()) {
             try {
-                const channelId = process.env.CHAT_CHANNEL_ID.split(',');
+                const channelId = process.env.CHAT_CHANNEL_ID.split(',').map((id) => id.trim());
                 // インタラクションが特定のチャンネルでなければ何もしない
                 if (!channelId.includes(message.channel.parentId)) {
                     return;

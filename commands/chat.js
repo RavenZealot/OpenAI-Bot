@@ -1,4 +1,4 @@
-const { MessageFlags, ChannelType } = require('discord.js');
+const { MessageFlags, ChannelType, ApplicationCommandType, ApplicationCommandOptionType } = require('discord.js');
 
 const logger = require('../utils/logger');
 const messenger = require('../utils/messenger');
@@ -9,26 +9,32 @@ const MODELS = {
     DEFAULT: 'gpt-5.4-mini',
     LIGHT: 'gpt-5.4-mini'
 };
+const CODE_PROMPTS = new Set([
+    'code',
+    'code_analysis',
+    'code_review',
+    'log_analysis'
+]);
 
-const MESSAGE_MAX_LENGTH = 2000;
+const MESSAGE_MAX_LENGTH = 1900;
 const THREAD_MAX_LENGTH = 80;
 
 module.exports = {
     data: {
         name: 'chat',
         description: 'OpenAI APIへ質問すると答えが返ってきます．',
-        type: 1,
+        type: ApplicationCommandType.ChatInput,
         options: [
             {
                 name: '質問',
                 description: '質問したい文を入れてください．',
-                type: 3,
+                type: ApplicationCommandOptionType.String,
                 required: true
             },
             {
                 name: 'プロンプト',
                 description: '回答アルゴリズムを指定できます．',
-                type: 3,
+                type: ApplicationCommandOptionType.String,
                 required: false,
                 choices: [
                     { name: 'デフォルト', value: 'default' },
@@ -47,14 +53,20 @@ module.exports = {
             {
                 name: '添付ファイル',
                 description: 'ファイルを添付してください（テキストファイルのみ）．',
-                type: 11,
+                type: ApplicationCommandOptionType.Attachment,
+                required: false
+            },
+            {
+                name: 'インライン回答',
+                description: 'スレッドを作成せず，このチャンネルへ直接回答します．',
+                type: ApplicationCommandOptionType.Boolean,
                 required: false
             }
         ]
     },
 
     async execute(interaction, OPENAI) {
-        const channelId = process.env.CHAT_CHANNEL_ID.split(',');
+        const channelId = process.env.CHAT_CHANNEL_ID.split(',').map((id) => id.trim());
         const openAiEmoji = process.env.OPENAI_EMOJI;
         // インタラクションが特定のチャンネルでなければ何もしない
         if (!channelId.includes(interaction.channelId)) {
@@ -73,19 +85,24 @@ module.exports = {
             // 選択されたプロンプト方式から質問文を生成
             const promptParam = interaction.options.getString('プロンプト') || 'default';
             const prompt = promptGenerator(promptParam);
+            // インライン回答の有無を取得
+            const inlineReply = interaction.options.getBoolean('インライン回答') ?? false;
 
             await logger.logToFile(`指示 : ${prompt.trim()}`); // 指示をコンソールに出力
             await logger.logToFile(`質問 : ${request.trim()}`); // 質問をコンソールに出力
+
+            // interaction の返信を遅延させる
+            await interaction.deferReply();
 
             // 添付ファイルがある場合は内容を取得
             let rawAttachment = '';
             let attachmentContent = '';
             let attachmentInfo = null;
-            if (interaction.options.get('添付ファイル')) {
-                const attachment = interaction.options.getAttachment('添付ファイル');
+            const attachment = interaction.options.getAttachment('添付ファイル');
+            if (attachment) {
                 attachmentInfo = { name: attachment.name, url: attachment.url };
                 // 添付ファイルがテキストの場合は質問文に追加
-                if (attachment.contentType && attachment.contentType.startsWith('text/')) {
+                if (attachment.contentType?.startsWith('text/')) {
                     try {
                         const response = await fetch(attachment.url);
                         const arrayBuffer = await response.arrayBuffer();
@@ -98,11 +115,57 @@ module.exports = {
                         await logger.errorToFile('添付ファイルの取得中にエラーが発生', error);
                     }
                 }
-                await logger.logToFileForAttachment(rawAttachment.trim());
+                await logger.logToFile(`添付ファイル : ${attachment.name}, ${attachment.contentType}, ${attachment.size}`);
             }
 
-            // interaction の返信を遅延させる
-            await interaction.deferReply();
+            // インラインで即時回答
+            if (inlineReply) {
+                await interaction.editReply({
+                    content: '回答を生成中…'
+                });
+
+                (async () => {
+                    let usedModel = 'unknown';
+                    let usage = [];
+
+                    try {
+                        const { completion, answerText } = await createChatResponse(OPENAI, {
+                            promptParam,
+                            prompt,
+                            request,
+                            attachmentContent
+                        });
+
+                        usedModel = completion.model;
+                        usage = completion.usage;
+
+                        await logger.logToFile(`回答 : ${answerText}`);
+
+                        // 回答を分割して同じチャンネルへ投稿
+                        await sendSplitAnswer({
+                            answerText,
+                            openAiEmoji,
+                            sendFirst: (content) => interaction.editReply({ content }),
+                            sendNext: (content) => interaction.followUp({ content })
+                        });
+                    } catch (error) {
+                        // Discord の文字数制限の場合
+                        if (error.code === 50035 || error.message?.includes('Invalid Form Body')) {
+                            await logger.errorToFile('Discord 文字数制限が発生', error);
+                            await interaction.editReply(messenger.errorMessages('Discord 文字数制限が発生しました', error.message));
+                        }
+                        // その他のエラーの場合
+                        else {
+                            await logger.errorToFile('OpenAI API の返信でエラーが発生', error);
+                            await interaction.editReply(messenger.errorMessages('OpenAI API の返信でエラーが発生しました', error.message));
+                        }
+                    } finally {
+                        await logger.tokenToFile(usedModel, usage);
+                    }
+                })();
+
+                return;
+            }
 
             // 質問文からスレッド名を生成
             let threadName;
@@ -144,82 +207,28 @@ module.exports = {
                 let usedModel = 'unknown';
                 let usage = [];
                 try {
-                    // プロンプトタイプに応じたモデルの選択
-                    const codePrompts = ['code', 'code_analysis', 'code_review', 'log_analysis'];
-                    let modelToUse;
-                    if (promptParam === 'reasoning') {
-                        modelToUse = MODELS.REASONING;
-                    } else if (codePrompts.includes(promptParam)) {
-                        modelToUse = MODELS.CODE;
-                    } else {
-                        modelToUse = MODELS.DEFAULT;
-                    }
-
-                    const messages = [{ role: 'system', content: prompt }];
-                    const userContent = [];
-                    if (attachmentContent) {
-                        userContent.push({
-                            type: 'input_text',
-                            text: `<attachment>\n${attachmentContent}\n</attachment>`
-                        });
-                    }
-                    userContent.push({
-                        type: 'input_text',
-                        text: request
+                    // OpenAI API への入力メッセージを構築
+                    const { completion, answerText } = await createChatResponse(OPENAI, {
+                        promptParam,
+                        prompt,
+                        request,
+                        attachmentContent
                     });
-                    messages.push({ role: 'user', content: userContent });
 
-                    // 添付ファイルの有無で推論モデルを変更
-                    const reasoningEffort = attachmentContent ? 'high' : 'medium';
-
-                    // モデルに応じてパラメータを設定
-                    let completionParams = {
-                        model: modelToUse,
-                        input: messages
-                    };
-                    if (promptParam === 'reasoning' || codePrompts.includes(promptParam)) {
-                        completionParams.reasoning = { effort: reasoningEffort };
-                    }
-                    messages.push({ role: 'user', content: '【注意】回答はMarkdown形式でなければ正しく表示されません' });
-
-                    const completion = await OPENAI.responses.create(completionParams);
                     // 使用モデル情報を取得
                     usedModel = completion.model;
                     // 使用トークン情報を取得
                     usage = completion.usage;
 
-                    const answerText = (completion.output_text || '').trim();
-
-                    if (!answerText) {
-                        throw new Error('OpenAI API からの回答が空です');
-                    }
-
                     await logger.logToFile(`回答 : ${answerText}`); // 回答をコンソールに出力
 
                     // 回答を分割してスレッドへ投稿
-                    const splitMessages = splitAnswer(answerText);
-                    let lastMessageId;
-                    // 単一メッセージの場合
-                    if (splitMessages.length === 1) {
-                        await processingMsg.edit({
-                            content: messenger.answerMessages(openAiEmoji, splitMessages[0])
-                        });
-                    }
-                    // 複数メッセージの場合
-                    else {
-                        for (let i = 0; i < splitMessages.length; i++) {
-                            const message = splitMessages[i];
-                            if (i === 0) {
-                                await processingMsg.edit({
-                                    content: messenger.answerFollowMessages(openAiEmoji, message, i + 1, splitMessages.length)
-                                });
-                            } else {
-                                await thread.send({
-                                    content: messenger.answerFollowMessages(openAiEmoji, message, i + 1, splitMessages.length)
-                                });
-                            }
-                        }
-                    }
+                    await sendSplitAnswer({
+                        answerText,
+                        openAiEmoji,
+                        sendFirst: (content) => processingMsg.edit({ content }),
+                        sendNext: (content) => thread.send({ content })
+                    });
 
                     // 会話状態を保存
                     try {
@@ -256,7 +265,7 @@ module.exports = {
     },
 
     async handleReply(message, OPENAI) {
-        const channelId = process.env.CHAT_CHANNEL_ID.split(',');
+        const channelId = process.env.CHAT_CHANNEL_ID.split(',').map((id) => id.trim());
         const openAiEmoji = process.env.OPENAI_EMOJI;
 
         const channel = message.channel;
@@ -267,12 +276,12 @@ module.exports = {
             const previousMessageId = message.reference?.messageId ?? null;
             let state = await logger.loadThreadConversationState(channel.id);
 
-            if ((!state || !state.response_id) && previousMessageId) {
+            if (!state?.response_id && previousMessageId) {
                 state = await logger.loadConversationState(previousMessageId);
             }
 
             // 状態が存在しない場合は会話の継続対象外
-            if (!state || !state.response_id) return;
+            if (!state?.response_id) return;
 
             const previousResponseId = state.response_id;
             const request = message.content;
@@ -286,9 +295,10 @@ module.exports = {
 
             let rawAttachment = '';
             let attachmentContent = '';
-            if (message.attachments.size > 0) {
+            if (message.attachments.size) {
                 const attachment = message.attachments.first();
-                if (attachment.contentType && attachment.contentType.startsWith('text/')) {
+                // 添付ファイルがテキストの場合は質問文に追加
+                if (attachment.contentType?.startsWith('text/')) {
                     try {
                         const response = await fetch(attachment.url);
                         const arrayBuffer = await response.arrayBuffer();
@@ -301,84 +311,41 @@ module.exports = {
                         await logger.errorToFile('添付ファイルの取得中にエラーが発生', error);
                     }
                 }
-                await logger.logToFileForAttachment(rawAttachment.trim());
+                await logger.logToFile(`添付ファイル : ${attachment.name}, ${attachment.contentType}, ${attachment.size}`);
             }
 
             await message.channel.sendTyping();
-            const processingMsg = await message.reply('回答を生成中…');
+            const processingMsg = await message.channel.send('回答を生成中…');
 
             (async () => {
                 let usedModel = 'unknown';
                 let usage = [];
                 try {
-                    const modelToUse = state.model || MODELS.DEFAULT;
-
-                    const messages = [{ role: 'system', content: prompt }];
-                    const userContent = [];
-                    if (attachmentContent) {
-                        userContent.push({
-                            type: 'input_text',
-                            text: `<attachment>\n${attachmentContent}\n</attachment>`
-                        });
-                    }
-                    userContent.push({
-                        type: 'input_text',
-                        text: request
+                    // OpenAI API への入力メッセージを構築
+                    const { completion, answerText } = await createChatResponse(OPENAI, {
+                        promptParam,
+                        prompt,
+                        request,
+                        attachmentContent,
+                        previousResponseId,
+                        model: state.model
                     });
-                    messages.push({ role: 'user', content: userContent });
 
-                    const reasoningEffort = attachmentContent ? 'high' : 'medium';
-
-                    let completionParams = {
-                        model: modelToUse,
-                        input: messages
-                    };
-                    const codePrompts = ['code', 'code_analysis', 'code_review', 'log_analysis'];
-                    if (promptParam === 'reasoning' || codePrompts.includes(promptParam)) {
-                        completionParams.reasoning = { effort: reasoningEffort };
-                    }
-                    messages.push({ role: 'user', content: '【注意】回答はMarkdown形式でなければ正しく表示されません' });
-
-                    if (previousResponseId) {
-                        completionParams.previous_response_id = previousResponseId;
-                    }
-
-                    const completion = await OPENAI.responses.create(completionParams);
+                    // 使用モデル情報を取得
                     usedModel = completion.model;
+                    // 使用トークン情報を取得
                     usage = completion.usage;
-
-                    const answerText = (completion.output_text || '').trim();
-
-                    if (!answerText) {
-                        throw new Error('OpenAI API の回答が空でした');
-                    }
 
                     await logger.logToFile(`回答 : ${answerText}`); // 回答をコンソールに出力
 
                     // 回答を分割してスレッドへ投稿
-                    const splitMessages = splitAnswer(answerText);
+                    await sendSplitAnswer({
+                        answerText,
+                        openAiEmoji,
+                        send: (content) => message.channel.send({ content })
+                    });
 
-                    // 単一メッセージの場合
-                    if (splitMessages.length === 1) {
-                        await processingMsg.edit({
-                            content: messenger.answerMessages(openAiEmoji, splitMessages[0])
-                        });
-                    }
-                    // 複数メッセージの場合
-                    else {
-                        for (let i = 0; i < splitMessages.length; i++) {
-                            const msgText = splitMessages[i];
-                            if (i === 0) {
-                                await processingMsg.edit({
-                                    content: messenger.answerFollowMessages(openAiEmoji, msgText, i + 1, splitMessages.length)
-                                });
-                            } else {
-                                await message.reply({
-                                    content: messenger.answerFollowMessages(openAiEmoji, msgText, i + 1, splitMessages.length)
-                                });
-                            }
-                        }
-                    }
+                    await processingMsg.delete().catch((error) => logger.errorToFile('回答生成中メッセージの削除でエラーが発生', error));
 
                     // 会話状態を保存
                     try {
@@ -412,6 +379,65 @@ module.exports = {
         }
     }
 };
+
+// OpenAI に質問を送信して回答を取得
+async function createChatResponse(OPENAI, { promptParam, prompt, request, attachmentContent = '', previousResponseId = null, model = null }) {
+    // OpenAI API への入力メッセージを構築
+    const messages = buildInputMessages(prompt, request, attachmentContent);
+
+    // プロンプトタイプに応じたモデルの選択
+    const modelToUse = model ?? selectModel(promptParam);
+    // モデルに応じてパラメータを設定
+    const completionParams = {
+        model: modelToUse,
+        input: messages
+    };
+    if (needsReasoning(promptParam)) {
+        // 添付ファイルの有無で推論モデルを変更
+        completionParams.reasoning = { effort: attachmentContent ? 'high' : 'medium' };
+    }
+
+    if (previousResponseId) {
+        completionParams.previous_response_id = previousResponseId;
+    }
+    const completion = await OPENAI.responses.create(completionParams);
+    const answerText = (completion.output_text || '').trim();
+
+    if (!answerText) {
+        throw new Error('OpenAI API からの回答が空です');
+    }
+
+    return {
+        completion,
+        answerText
+    };
+}
+
+// 入力メッセージを構築
+function buildInputMessages(prompt, request, attachmentContent) {
+    const userContent = [];
+
+    if (attachmentContent) {
+        userContent.push({
+            type: 'input_text',
+            text: `<attachment>\n${attachmentContent}\n</attachment>`
+        });
+    }
+
+    userContent.push({
+        type: 'input_text',
+        text: request
+    });
+
+    return [
+        { role: 'system', content: prompt },
+        { role: 'user', content: userContent },
+        {
+            role: 'user',
+            content: '【注意】回答はMarkdown形式でなければ正しく表示されません'
+        }
+    ];
+}
 
 // スレッド名を生成
 async function generateThreadName(OPENAI, request, attachmentContent) {
@@ -473,11 +499,22 @@ function buildStarterMessage(userId, request, attachmentInfo) {
     return content;
 }
 
-// 文字列を指定長で切り詰める
-function limitText(text, max) {
-    if (!text) return '';
-    if (text.length <= max) return text;
-    return text.slice(0, max) + '…';
+// 回答を分割して送信
+async function sendSplitAnswer({ answerText, openAiEmoji, send, sendFirst = send, sendNext = send }) {
+    if (!sendFirst || !sendNext) {
+        throw new Error('sendFirst および sendNext 関数は必須です');
+    }
+
+    const splitMessages = splitAnswer(answerText);
+
+    for (let i = 0; i < splitMessages.length; i++) {
+        const content = splitMessages.length === 1
+            ? messenger.answerMessages(openAiEmoji, splitMessages[i])
+            : messenger.answerFollowMessages(openAiEmoji, splitMessages[i], i + 1, splitMessages.length);
+
+        const sender = i ? sendNext : sendFirst;
+        await sender(content);
+    }
 }
 
 function promptGenerator(prompt) {
@@ -534,6 +571,31 @@ Subject は英語で簡潔な 30 字程度の要約とする
     }
 }
 
+// プロンプトタイプに応じたモデルの選択
+function selectModel(promptParam) {
+    if (promptParam === 'reasoning') {
+        return MODELS.REASONING;
+    }
+
+    if (CODE_PROMPTS.has(promptParam)) {
+        return MODELS.CODE;
+    }
+
+    return MODELS.DEFAULT;
+}
+
+function needsReasoning(promptParam) {
+    return promptParam === 'reasoning' || CODE_PROMPTS.has(promptParam);
+}
+
+// 文字列を指定長で切り詰める
+function limitText(text, max) {
+    if (!text) return '';
+    if (text.length <= max) return text;
+    return text.slice(0, max) + '…';
+}
+
+// 回答を分割する
 function splitAnswer(answer) {
     let messages = [];
     let currentMessage = '';
@@ -588,7 +650,7 @@ function splitAnswer(answer) {
     }
 
     // 残りのメッセージを追加
-    if (currentMessage.length > 0) {
+    if (currentMessage.length) {
         messages.push(currentMessage.trim());
     }
 
