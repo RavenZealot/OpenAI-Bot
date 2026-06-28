@@ -97,7 +97,7 @@ module.exports = {
 
                         // OpenAI に依頼を送信しイラストを編集
                         (async () => {
-                            let usage = [];
+                            let usage = {};
                             // 添付ファイルの内容をバイナリデータとして取得
                             const fileStream = streamifier.createReadStream(attachmentContent);
                             const fileForEdit = await toFile(fileStream, null, {
@@ -173,7 +173,7 @@ module.exports = {
                 else {
                     // OpenAI に依頼を送信しイラストを取得
                     (async () => {
-                        let usage = [];
+                        let usage = {};
                         try {
                             const completion = await OPENAI.images.generate({
                                 model: modelToUse,

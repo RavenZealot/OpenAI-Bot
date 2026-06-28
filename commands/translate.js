@@ -62,7 +62,7 @@ module.exports = {
                 // OpenAI に依頼文を送信し翻訳文を取得
                 (async () => {
                     let usedModel = 'unknown';
-                    let usage = [];
+                    let usage = {};
                     let modelToUse = 'gpt-5-mini';
                     try {
                         const messages = [

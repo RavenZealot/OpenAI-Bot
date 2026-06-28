@@ -126,7 +126,7 @@ module.exports = {
 
                 (async () => {
                     let usedModel = 'unknown';
-                    let usage = [];
+                    let usage = {};
 
                     try {
                         const { completion, answerText } = await createChatResponse(OPENAI, {
@@ -205,7 +205,7 @@ module.exports = {
             // OpenAI に質問を送信し回答を取得
             (async () => {
                 let usedModel = 'unknown';
-                let usage = [];
+                let usage = {};
                 try {
                     // OpenAI API への入力メッセージを構築
                     const { completion, answerText } = await createChatResponse(OPENAI, {
@@ -319,7 +319,7 @@ module.exports = {
 
             (async () => {
                 let usedModel = 'unknown';
-                let usage = [];
+                let usage = {};
                 try {
                     // OpenAI API への入力メッセージを構築
                     const { completion, answerText } = await createChatResponse(OPENAI, {
