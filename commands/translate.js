@@ -63,7 +63,7 @@ module.exports = {
                 (async () => {
                     let usedModel = 'unknown';
                     let usage = {};
-                    let modelToUse = 'gpt-5-mini';
+                    let modelToUse = 'gpt-6-luna';
                     try {
                         const messages = [
                             { role: 'system', content: prompt },

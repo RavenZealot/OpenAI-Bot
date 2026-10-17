@@ -1,13 +1,13 @@
-const { MessageFlags, ChannelType, ApplicationCommandType, ApplicationCommandOptionType } = require('discord.js');
+const { MessageFlags, ApplicationCommandType, ApplicationCommandOptionType } = require('discord.js');
 
 const logger = require('../utils/logger');
 const messenger = require('../utils/messenger');
 
 const MODELS = {
-    REASONING: 'gpt-5.5-pro',
-    CODE: 'gpt-5.5',
-    DEFAULT: 'gpt-5.4-mini',
-    LIGHT: 'gpt-5.4-mini'
+    REASONING: 'gpt-6-astra',
+    CODE: 'gpt-6.1-sol',
+    DEFAULT: 'gpt-6.1-sol',
+    LIGHT: 'gpt-6-luna'
 };
 const CODE_PROMPTS = new Set([
     'code',

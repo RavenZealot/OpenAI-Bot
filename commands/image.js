@@ -71,7 +71,7 @@ module.exports = {
                 // interaction の返信を遅延させる
                 await interaction.deferReply();
 
-                let modelToUse = 'gpt-image-2';
+                let modelToUse = 'gpt-image-2.5-sunburst';
 
                 // 添付ファイルが指定されていれば「編集」APIを呼び出す
                 if (interaction.options.get('添付ファイル')) {
