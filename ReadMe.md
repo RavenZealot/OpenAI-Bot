@@ -9,6 +9,7 @@ AI chat bot for Discord using OpenAI API
 
 ## Required (Only once)
 
+- Node.js 22 or later
 - `.env` (Root directory)
   - OPENAI_ORG_ID : OpenAI [Organization ID](https://platform.openai.com/settings/organization/general)
   - OPENAI_API_KEY : OpenAI [API keys](https://platform.openai.com/settings/organization/api-keys)

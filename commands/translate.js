@@ -100,7 +100,15 @@ module.exports = {
                 })();
             } catch (error) {
                 await logger.errorToFile('原文の取得でエラーが発生', error);
-                await interaction.editReply(messenger.errorMessages('原文の取得でエラーが発生しました', error.message));
+                const errorMessage = messenger.errorMessages('原文の取得でエラーが発生しました', error.message);
+                if (interaction.deferred || interaction.replied) {
+                    await interaction.editReply(errorMessage);
+                } else {
+                    await interaction.reply({
+                        content: errorMessage,
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
             }
         }
         // インタラクションが特定のチャンネルでなければ何もしない

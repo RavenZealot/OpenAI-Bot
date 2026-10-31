@@ -66,11 +66,20 @@ DISCORD.on(Discord.Events.InteractionCreate, async (interaction) => {
         await logger.commandToFile(interaction);
         await command.execute(interaction, OPENAI);
     } catch (error) {
-        await interaction.reply({
+        await logger.errorToFile('コマンドを実行中にエラーが発生', error);
+        const errorResponse = {
             content: messenger.errorMessages('コマンドを実行中にエラーが発生しました', error.message),
             flags: Discord.MessageFlags.Ephemeral
-        });
-        await logger.errorToFile('コマンドを実行中にエラーが発生', error);
+        };
+        try {
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp(errorResponse);
+            } else {
+                await interaction.reply(errorResponse);
+            }
+        } catch (replyError) {
+            await logger.errorToFile('エラー通知の送信に失敗', replyError);
+        }
     }
 });
 

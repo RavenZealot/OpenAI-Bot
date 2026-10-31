@@ -57,6 +57,9 @@ module.exports = {
         if (channelId.includes(interaction.channelId)) {
             // `image` コマンドが呼び出された場合 OpenAI にイラスト生成を依頼
             try {
+                // interaction の返信を遅延させる
+                await interaction.deferReply();
+
                 // 依頼を取得
                 const request = interaction.options.getString('依頼');
                 // 選択されたプロンプト方式から依頼文を生成
@@ -67,9 +70,6 @@ module.exports = {
 
                 await logger.logToFile(`画風 : ${promptParam}`); // 画風をコンソールに出力
                 await logger.logToFile(`依頼 : ${prompt.trim()}（${size}）`); // 依頼をコンソールに出力
-
-                // interaction の返信を遅延させる
-                await interaction.deferReply();
 
                 let modelToUse = 'gpt-image-2.5-sunburst';
 
@@ -159,9 +159,8 @@ module.exports = {
                             }
                         })();
                     } else {
-                        await interaction.reply({
-                            content: messenger.usageMessages(`添付ファイルは画像ファイルのみ対応しています`),
-                            flags: MessageFlags.Ephemeral
+                        await interaction.editReply({
+                            content: messenger.usageMessages(`添付ファイルは画像ファイルのみ対応しています`)
                         });
                         return;
                     }
@@ -230,7 +229,15 @@ module.exports = {
                 }
             } catch (error) {
                 await logger.errorToFile('依頼の取得でエラーが発生', error);
-                await interaction.editReply(messenger.errorMessages('依頼の取得でエラーが発生しました', error.message));
+                const errorMessage = messenger.errorMessages('依頼の取得でエラーが発生しました', error.message);
+                if (interaction.deferred || interaction.replied) {
+                    await interaction.editReply(errorMessage);
+                } else {
+                    await interaction.reply({
+                        content: errorMessage,
+                        flags: MessageFlags.Ephemeral
+                    });
+                }
             }
         }
         // インタラクションが特定のチャンネルでなければ何もしない
