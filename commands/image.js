@@ -148,6 +148,11 @@ module.exports = {
                                     await logger.errorToFile('Discord 文字数制限が発生', error);
                                     await interaction.editReply(messenger.errorMessages('Discord 文字数制限が発生しました', error.message));
                                 }
+                                // OpenAI の安全ポリシーにより拒否された場合
+                                else if (error.message.includes('safety system')) {
+                                    await logger.errorToFile('OpenAI API の安全ポリシー拒否でエラーが発生', error);
+                                    await interaction.editReply(messenger.safetyMessages('画像生成が安全ポリシーにより拒否されました', error.message));
+                                }
                                 // その他のエラーの場合
                                 else {
                                     await logger.errorToFile('OpenAI API のイラスト編集でエラーが発生', error);

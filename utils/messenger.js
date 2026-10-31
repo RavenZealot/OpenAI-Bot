@@ -19,6 +19,11 @@ module.exports = {
         return `:warning: **エラー** : ${answer} :warning:\n\`\`\`${error}\`\`\``;
     },
 
+    // 安全ポリシー拒否メッセージを生成
+    safetyMessages: function (answer, error) {
+        return `:shield: **エラー** : ${answer} :shield:\n\`\`\`${error}\`\`\``;
+    },
+
     // 使用不可メッセージを生成
     usageMessages: function (answer) {
         return `:prohibited: **エラー** : ${answer} :prohibited:`;
